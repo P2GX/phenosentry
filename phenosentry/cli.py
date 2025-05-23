@@ -1,0 +1,59 @@
+from pathlib import Path
+
+import click
+import logging
+
+from .model import InputMode
+from .qc import qc_phenopackets
+from .io import read_phenopacket_store
+
+def setup_logging():
+    level = logging.INFO
+    logger = logging.getLogger()
+    logger.setLevel(level)
+    # create console handler and set level to debug
+    ch = logging.StreamHandler()
+    ch.setLevel(level)
+    # create formatter
+    formatter = logging.Formatter(
+        "%(asctime)s %(name)-20s %(levelname)-3s : %(message)s"
+    )
+    # add formatter to ch
+    ch.setFormatter(formatter)
+    # add ch to logger
+    logger.addHandler(ch)
+
+@click.group()
+def cli():
+    pass
+
+@click.command()
+@click.option("--path", type=click.Path(exists=True, readable=True), required=True)
+@click.option(
+    "--mode",
+    type=click.Choice([m.value for m in InputMode]),
+    required=True,
+    help="Input type: store, folder, or file."
+)
+def validate(path, mode):
+    setup_logging()
+    logger = logging.getLogger(__name__)
+    mode_enum = InputMode(mode)
+    path = Path(path)
+    if mode_enum == "store":
+        store = read_phenopacket_store(path, logger)
+        qc_phenopackets(store, logger)
+    elif mode_enum == "folder":
+        # Implement logic for folder of phenopackets
+        store = read_
+        pass
+    elif mode_enum == "file":
+        # Implement logic for single phenopacket
+        pass
+
+
+
+
+
+if __name__ == '__main__':
+    cli()
