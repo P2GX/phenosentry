@@ -39,17 +39,8 @@ def validate(path, mode):
     setup_logging()
     logger = logging.getLogger(__name__)
     mode_enum = InputMode(mode)
-    path = Path(path)
-    if mode_enum == "store":
-        store = read_phenopacket_store(path, logger)
-        qc_phenopackets(store, logger)
-    elif mode_enum == "folder":
-        # Implement logic for folder of phenopackets
-        store = read_
-        pass
-    elif mode_enum == "file":
-        # Implement logic for single phenopacket
-        pass
+    store = read_phenopacket_store(path, mode_enum, logger)
+    qc_phenopackets(store, logger)
 
 
 
