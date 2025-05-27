@@ -1,10 +1,10 @@
 import abc
 
-from ..model import BasePhenopacketStore
+from ..model import PhenopacketStore
 from stairval import Auditor
 
 
-class PhenopacketStoreAuditor(Auditor[BasePhenopacketStore], metaclass=abc.ABCMeta):
+class PhenopacketStoreAuditor(Auditor[PhenopacketStore], metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def make_id(self) -> str:

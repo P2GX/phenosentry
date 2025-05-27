@@ -1,13 +1,9 @@
 import typing
-
 from collections import Counter, defaultdict
-
 from stairval.notepad import Notepad
-
-from ppktstore.model import PhenopacketStore
-
+from ..model import PhenopacketStore
 from ._api import PhenopacketStoreAuditor
-
+from hpotk.ontology import Ontology
 
 class UniqueIdsCheck(PhenopacketStoreAuditor):
     """
@@ -102,15 +98,40 @@ class NoUnwantedCharactersCheck(PhenopacketStoreAuditor):
             if ch in self._unwanted:
                 notepad.add_error(f"`{value}` includes a forbidden character `{ch}`")
 
+class DeprecatedTermIdCheck(PhenopacketStoreAuditor):
+
+    """
+    Check that all term IDs in the phenopackets do not use deprecated identifiers.
+    """
+
+    def __init__(self, ontology: Ontology):
+        self.ontology = ontology
+
+    def make_id(self) -> str:
+        return "deprecated_term_id_check"
+
+    def audit(
+        self,
+        item: PhenopacketStore,
+        notepad: Notepad,
+    ):
+        for cohort in item.cohorts():
+            for pp in cohort.phenopackets:
+                for phenotype in pp.phenopacket.phenotypic_features:
+                    term = self.ontology.get_term(phenotype.type.id)
+                    if term is not None and term.is_obsolete or term.identifier.value != phenotype.type.id:
+                        msg = f"`{pp.phenopacket.id}` has a deprecated term ID `{phenotype.type.id}` in cohort `{cohort.name}`"
+                        notepad.add_error(msg)
 
 class DefaultPhenopacketStoreAuditor(PhenopacketStoreAuditor):
 
     def __init__(
         self,
-        checks: typing.Iterable[PhenopacketStoreAuditor],
+        checks: typing.Iterable[PhenopacketStoreAuditor]
     ):
         self._checks = tuple(checks)
         self._id = '[' + ', '.join(check.make_id() for check in self._checks) + ']'
+
 
     def audit(
         self,

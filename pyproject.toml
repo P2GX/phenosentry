@@ -12,7 +12,10 @@ phenopackets = "^2.0.2.post4"
 certifi = "^2025.4.26"
 pandas = "^2.2.3"
 stairval = "^0.2.0"
+hpo-toolkit = "^0.5.5"
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
 
 [build-system]
 requires = ["poetry-core"]

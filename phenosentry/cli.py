@@ -4,7 +4,7 @@ import click
 import logging
 
 from .model import InputMode
-from .qc import qc_phenopackets
+from .validation import qc_phenopackets
 from .io import read_phenopacket_store
 
 def setup_logging():
@@ -33,7 +33,7 @@ def cli():
     "--mode",
     type=click.Choice([m.value for m in InputMode]),
     required=True,
-    help="Input type: store, folder, or file."
+    help="Input type: store (phenopacket-store), folder (set-of-phenopackets), or file (single-phenpacket)."
 )
 def validate(path, mode):
     setup_logging()

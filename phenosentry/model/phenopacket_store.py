@@ -1,4 +1,5 @@
 import abc
+import sys
 from pathlib import Path
 import typing
 import zipfile
@@ -7,11 +8,10 @@ import uuid
 from collections import defaultdict
 from phenopackets.schema.v2.phenopackets_pb2 import Phenopacket
 from google.protobuf.json_format import Parse
-from ..io.zip_util import relative_to
-from ..model import EagerPhenopacketInfo, ZipPhenopacketInfo
+from .phenopacket_info import EagerPhenopacketInfo, ZipPhenopacketInfo
 from .cohort_info import CohortInfo
 
-class BasePhenopacketStore(metaclass=abc.ABCMeta):
+class PhenopacketStore(metaclass=abc.ABCMeta):
     """
     `PhenopacketStore` provides the data and metadata for Phenopacket Store cohorts.
 
@@ -22,7 +22,7 @@ class BasePhenopacketStore(metaclass=abc.ABCMeta):
     def from_release_zip(
             zip_file: zipfile.ZipFile,
             strategy: typing.Literal["eager", "lazy"] = "eager",
-    ) -> "BasePhenopacketStore":
+    ) -> "PhenopacketStore":
         """
         Read `PhenopacketStore` from a release ZIP archive.
 
@@ -50,7 +50,7 @@ class BasePhenopacketStore(metaclass=abc.ABCMeta):
 
           >>> import zipfile
           >>> with zipfile.ZipFile("all_phenopackets.zip") as zf:  # doctest: +SKIP
-          ...   ps = BasePhenopacketStore.from_release_zip(zf)
+          ...   ps = PhenopacketStore.from_release_zip(zf)
           ...   # Do things here...
 
         :param zip_file: a ZIP archive handle.
@@ -86,7 +86,6 @@ class BasePhenopacketStore(metaclass=abc.ABCMeta):
         cohorts = []
         for cohort, cohort_path in cohort2path.items():
             if cohort in cohort2pp_paths:
-                # cohort_path.relative_to(root)
                 at = relative_to(root, cohort_path)
                 rel_cohort_path = zipfile.Path(
                     zip_file, at=at,
@@ -116,7 +115,7 @@ class BasePhenopacketStore(metaclass=abc.ABCMeta):
 
         path = Path(str(root))
 
-        return BasePhenopacketStore.from_cohorts(
+        return PhenopacketStore.from_cohorts(
             name=name,
             path=path,
             cohorts=cohorts,
@@ -126,7 +125,7 @@ class BasePhenopacketStore(metaclass=abc.ABCMeta):
     def from_notebook_dir(
             nb_dir: str,
             pp_dir: str = "phenopackets",
-    ) -> "BasePhenopacketStore":
+    ) -> "PhenopacketStore":
         """
         Create `PhenopacketStore` from Phenopacket store notebook dir `nb_dir`.
 
@@ -162,7 +161,7 @@ class BasePhenopacketStore(metaclass=abc.ABCMeta):
                         )
                     )
 
-        return BasePhenopacketStore.from_cohorts(
+        return PhenopacketStore.from_cohorts(
             name=nb_path.name,
             path=nb_path,
             cohorts=cohorts,
@@ -173,7 +172,7 @@ class BasePhenopacketStore(metaclass=abc.ABCMeta):
             name: str,
             path: Path,
             cohorts: typing.Iterable[CohortInfo],
-    ) -> "BasePhenopacketStore":
+    ) -> "PhenopacketStore":
         """
         Create `PhenopacketStore` from cohorts.
 
@@ -181,14 +180,14 @@ class BasePhenopacketStore(metaclass=abc.ABCMeta):
         :param path: a path to the store root to resolve phenopacket locations.
         :param cohorts: an iterable with cohorts.
         """
-        return PhenopacketStore(
+        return DefaultPhenopacketStore(
             name=name,
             path=path,
             cohorts=cohorts,
         )
 
     @staticmethod
-    def from_folder(path: str) -> "BasePhenopacketStore":
+    def from_folder(path: str) -> "PhenopacketStore":
         """
         Create `PhenopacketStore` from folder we group all phenopackets to a single cohort.
 
@@ -198,6 +197,7 @@ class BasePhenopacketStore(metaclass=abc.ABCMeta):
         cohorts = []
         cohort_name = f"{str(uuid.uuid4())}-run"
         pp_infos = []
+        path = Path(path)
         for filename in os.listdir(Path(path)):
             if filename.endswith(".json"):
                 filepath = path.joinpath(filename)
@@ -214,14 +214,14 @@ class BasePhenopacketStore(metaclass=abc.ABCMeta):
                 phenopackets=tuple(pp_infos),
             )
         )
-        return PhenopacketStore(
+        return DefaultPhenopacketStore(
             name=cohort_name,
             path=path,
             cohorts=cohorts,
         )
 
     @staticmethod
-    def from_file(path: str) -> "BasePhenopacketStore":
+    def from_file(path: str) -> "PhenopacketStore":
         """
         Create `PhenopacketStore` from a single phenopacket JSON file.
         The result is a store with one cohort and one phenopacket.
@@ -234,6 +234,7 @@ class BasePhenopacketStore(metaclass=abc.ABCMeta):
         from google.protobuf.json_format import Parse
 
         cohort_name = f"{uuid.uuid4()}-single"
+        path = Path(path)
         pp = Parse(path.read_text(), Phenopacket())
         pi = EagerPhenopacketInfo(
             path=path.name,
@@ -244,7 +245,7 @@ class BasePhenopacketStore(metaclass=abc.ABCMeta):
             path=str(path),
             phenopackets=(pi,),
         )
-        return PhenopacketStore(
+        return DefaultPhenopacketStore(
             name=cohort_name,
             path=path,
             cohorts=[cohort],
@@ -261,7 +262,7 @@ class BasePhenopacketStore(metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def path(self) -> pathlib.Path:
+    def path(self) -> Path:
         """
         Get path to the phenopacket store resource.
         """
@@ -317,8 +318,8 @@ class BasePhenopacketStore(metaclass=abc.ABCMeta):
         return sum(len(cohort) for cohort in self.cohorts())
 
 
-class PhenopacketStore(BasePhenopacketStore):
-    def __init__(self, name: str, path: pathlib.Path, cohorts: typing.Iterable[CohortInfo]):
+class DefaultPhenopacketStore(PhenopacketStore):
+    def __init__(self, name: str, path: Path, cohorts: typing.Iterable[CohortInfo]):
         self._name = name
         self._path = path
         self._cohorts = {cohort.name: cohort for cohort in cohorts}
@@ -328,7 +329,7 @@ class PhenopacketStore(BasePhenopacketStore):
         return self._name
 
     @property
-    def path(self) -> pathlib.Path:
+    def path(self) -> Path:
         return self._path
 
     def cohorts(self) -> typing.Collection[CohortInfo]:
@@ -336,3 +337,13 @@ class PhenopacketStore(BasePhenopacketStore):
 
     def cohort_for_name(self, name: str) -> CohortInfo:
         return self._cohorts[name]
+
+
+def relative_to(a, b) -> str:
+    if sys.version_info >= (3, 12):
+        # The functionality seems to have been introduced in 3.12.
+        return str(a.relative_to(b))
+    else:
+        a_str = str(a)
+        b_str = str(b)
+        return b_str.replace(a_str, '')

@@ -3,11 +3,11 @@ import logging
 
 from ._config import configure_qc_checker
 
-from ..model import BasePhenopacketStore
+from ..model import PhenopacketStore
 
 
 def qc_phenopackets(
-    store: BasePhenopacketStore,
+    store: PhenopacketStore,
     logger: logging.Logger,
 ) -> int:
     logger.info('Checking phenopackets')
