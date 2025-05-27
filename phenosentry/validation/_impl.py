@@ -1,7 +1,7 @@
 import io
 import logging
 
-from ._config import configure_qc_checker
+from ._config import default_auditor
 
 from ..model import PhenopacketStore
 
@@ -11,7 +11,7 @@ def qc_phenopackets(
     logger: logging.Logger,
 ) -> int:
     logger.info('Checking phenopackets')
-    auditor = configure_qc_checker()
+    auditor = default_auditor()
     notepad = auditor.prepare_notepad(store.name)
     auditor.audit(
         item=store,

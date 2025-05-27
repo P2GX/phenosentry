@@ -2,7 +2,7 @@ from ._api import PhenopacketStoreAuditor
 from ._checks import DefaultPhenopacketStoreAuditor, UniqueIdsCheck, NoUnwantedCharactersCheck, DeprecatedTermIdCheck
 import hpotk
 
-def configure_qc_checker() -> PhenopacketStoreAuditor:
+def default_auditor() -> PhenopacketStoreAuditor:
     store = hpotk.configure_ontology_store()
     hpo = store.load_hpo()
     checks = (

@@ -2,14 +2,14 @@ import zipfile
 
 import pytest
 from phenosentry.model import DefaultPhenopacketStore, PhenopacketStore
-from phenosentry.validation import configure_qc_checker, PhenopacketStoreAuditor
+from phenosentry.validation import default_auditor, PhenopacketStoreAuditor
 
 
 class TestPhenopacketStoreAuditor:
 
     @pytest.fixture(scope="class")
     def auditor(self) -> PhenopacketStoreAuditor:
-        return configure_qc_checker()
+        return default_auditor()
 
     @pytest.fixture(scope="class")
     def phenopacket_store(
