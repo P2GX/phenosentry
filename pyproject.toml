@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "phenosentry"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 authors = ["iimpulse <Michael.Gargano@jax.org>", { name = "Daniel Danis", email = "daniel.gordon.danis@protonmail.com" }]
 readme = "README.md"
