@@ -1,8 +1,6 @@
 import io
 import logging
-
 from ._config import default_auditor
-
 from ..model import PhenopacketStore
 
 

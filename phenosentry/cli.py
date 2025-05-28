@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import click
 import logging
 
@@ -24,10 +22,10 @@ def setup_logging():
     logger.addHandler(ch)
 
 @click.group()
-def cli():
+def main():
     pass
 
-@click.command()
+@main.command('validate')
 @click.option("--path", type=click.Path(exists=True, readable=True), required=True)
 @click.option(
     "--mode",
@@ -43,8 +41,5 @@ def validate(path, mode):
     qc_phenopackets(store, logger)
 
 
-
-
-
 if __name__ == '__main__':
-    cli()
+    main()

@@ -1,5 +1,4 @@
 import abc
-
 from ..model import PhenopacketStore
 from stairval import Auditor
 
