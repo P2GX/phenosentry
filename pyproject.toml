@@ -2,7 +2,7 @@
 name = "phenosentry"
 version = "0.1.0"
 description = ""
-authors = ["iimpulse <Michael.Gargano@jax.org>"]
+authors = ["iimpulse <Michael.Gargano@jax.org>", { name = "Daniel Danis", email = "daniel.gordon.danis@protonmail.com" }]
 readme = "README.md"
 
 [tool.poetry.dependencies]
