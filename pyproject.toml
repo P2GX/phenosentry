@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "phenosentry"
-version = "0.1.1"
+version = "0.1.2"
 description = ""
 authors = ["Michael Gargano <Michael.Gargano@jax.org>", "Daniel Danis <daniel.gordon.danis@protonmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^>=3.10"
 click = "^8.2.1"
 phenopackets = "^2.0.2.post4"
 certifi = "^2025.4.26"
