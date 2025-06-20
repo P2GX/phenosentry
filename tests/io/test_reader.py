@@ -10,18 +10,18 @@ class TestReader:
     @pytest.fixture(scope="class")
     def phenopacket(
         self,
-        fpath_broken: str,
+        fpath_default_fail: str,
     ) -> PhenopacketInfo:
-        return EagerPhenopacketInfo.from_path(fpath_broken)
+        return EagerPhenopacketInfo.from_path(fpath_default_fail)
 
     def test_read_phenopacket(
         self,
-        fpath_broken: str
+        fpath_default_fail: str
     ):
-        phenopacket_info = read_phenopacket(fpath_broken, self.logger)
+        phenopacket_info = read_phenopacket(fpath_default_fail, self.logger)
         assert isinstance(phenopacket_info, PhenopacketInfo)
-        assert phenopacket_info.path == fpath_broken
-        assert phenopacket_info.phenopacket.id == "PMID_28239884_Family_4_proband"
+        assert phenopacket_info.path == fpath_default_fail
+        assert phenopacket_info.phenopacket.id == "PMID_28239884_Family_4_proband\t"
 
     def test_read_phenopackets(
             self,
