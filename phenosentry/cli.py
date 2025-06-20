@@ -1,9 +1,7 @@
-import click
-import logging
-
-from .model import InputMode
-from .validation import qc_phenopackets
-from .io import read_phenopacket_store
+import click, logging, pathlib, io
+from phenosentry.model.auditor_level import AuditorLevel
+from .validation import get_cohort_auditor, get_phenopacket_auditor
+from .io import read_phenopacket, read_cohort, read_phenopackets
 
 def setup_logging():
     level = logging.INFO
@@ -28,18 +26,64 @@ def main():
 @main.command('validate')
 @click.option("--path", type=click.Path(exists=True, readable=True), required=True)
 @click.option(
-    "--mode",
-    type=click.Choice([m.value for m in InputMode]),
+    "--level",
+    type=click.Choice([m.value for m in AuditorLevel]),
     required=True,
-    help="Input type: store (phenopacket-store), folder (set-of-phenopackets), or file (single-phenpacket)."
+    help="The level of validation to perform: strict or default."
 )
-def validate(path, mode):
+@click.option('--cohort', is_flag=True, help='Indicates that the input is a cohort.')
+def validate(path, level, is_cohort):
     setup_logging()
     logger = logging.getLogger(__name__)
-    mode_enum = InputMode(mode)
-    store = read_phenopacket_store(path, mode_enum, logger)
-    qc_phenopackets(store, logger)
+    pathed = pathlib.Path(path)
+    notepad = None
+    if pathed.is_file():
+        phenopacket = read_phenopacket(
+            directory=str(path),
+            logger=logger,
+        )
+        # single phenopacket
+        auditor = get_phenopacket_auditor(level)
+        notepad = auditor.prepare_notepad(auditor.id())
+        auditor.audit(
+            item=phenopacket,
+            notepad=notepad,
+        )
+    elif pathed.is_dir():
+        # cohort of phenopackets
+        if is_cohort:
+            cohort = read_cohort(
+                directory=str(path),
+                logger=logger,
+            )
+            auditor = get_cohort_auditor()
+            notepad = auditor.prepare_notepad(auditor.id())
+            auditor.audit(
+                item=cohort,
+                notepad=notepad,
+            )
+        else:
+            # We iterate phenopackets and validate them seperately
+            auditor = get_phenopacket_auditor(level)
+            notepad = auditor.prepare_notepad(auditor.id())
+            phenopackets = read_phenopackets(str(path), logger=logger)
+            for phenopacket in phenopackets:
+                notepad.add_subsection("Phenopacket {}".format(phenopacket.id))
+                auditor.audit(
+                    item=phenopacket,
+                    notepad=notepad,
+                )
 
+
+    buf = io.StringIO()
+    # TODO: Notepad summary should include source data and spot of issue
+    notepad.summarize(file=buf)
+    if notepad.has_errors_or_warnings(include_subsections=True):
+        logger.error(buf.getvalue())
+        return 1
+    else:
+        logger.info(buf.getvalue())
+        return 0
 
 if __name__ == '__main__':
     main()

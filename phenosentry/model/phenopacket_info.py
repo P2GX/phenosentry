@@ -4,7 +4,7 @@ from phenopackets.schema.v2.phenopackets_pb2 import Phenopacket
 from google.protobuf.json_format import Parse
 import zipfile
 
-class BasePhenopacketInfo(metaclass=ABCMeta):
+class PhenopacketInfo(metaclass=ABCMeta):
     @property
     @abstractmethod
     def path(self) -> str:
@@ -15,14 +15,14 @@ class BasePhenopacketInfo(metaclass=ABCMeta):
     def phenopacket(self) -> Phenopacket:
         pass
 
-class EagerPhenopacketInfo(BasePhenopacketInfo):
+class EagerPhenopacketInfo(PhenopacketInfo):
     @staticmethod
-    def from_path(path: str, pp_path: pathlib.Path) -> "EagerPhenopacketInfo":
-        pp = Parse(pp_path.read_text(), Phenopacket())
+    def from_path(path: str) -> PhenopacketInfo:
+        pp = Parse(pathlib.Path(path).read_text(), Phenopacket())
         return EagerPhenopacketInfo.from_phenopacket(path, pp)
 
     @staticmethod
-    def from_phenopacket(path: str, pp: Phenopacket) -> "EagerPhenopacketInfo":
+    def from_phenopacket(path: str, pp: Phenopacket) -> PhenopacketInfo:
         return EagerPhenopacketInfo(path, pp)
 
     def __init__(self, path: str, phenopacket: Phenopacket):
@@ -54,7 +54,7 @@ class EagerPhenopacketInfo(BasePhenopacketInfo):
         return str(self)
 
 
-class ZipPhenopacketInfo(BasePhenopacketInfo):
+class ZipPhenopacketInfo(PhenopacketInfo):
     def __init__(self, path: str, pp_path: zipfile.Path):
         self._path = path
         self._pp_path = pp_path
