@@ -22,27 +22,36 @@ pip install phenosentry
 ```
 
 # Usage
+command line interface (CLI):
+```bash
+phenosentry validate
+```
+
+or in Python code:
 
 ```python
-from phenosentry.model import DefaultPhenopacketStore
-from phenosentry.validation import default_auditor
-
-# Load a phenopacket store from a folder
-store = DefaultPhenopacketStore.from_folder("path/to/phenopackets")
-
-# Get the default auditor
-auditor = default_auditor()
-
-# Prepare a notepad for auditing
-notepad = auditor.prepare_notepad("my-store")
-
-# Audit the phenopacket store
-auditor.audit(item=store, notepad=notepad)
-
-if notepad.has_errors_or_warnings():
-    print("Issues found in phenopacket store!")
+from phenosentry.model import AuditorLevel
+from phenosentry.validation import get_phenopacket_auditor
+from phenosentry.io import read_phenopacket
+import logging
+# Single Phenopacket Validation
+path = "path/to/phenopacket.json"
+logger = logging.getLogger("phenosentry")
+phenopacket = read_phenopacket(
+        directory=str(path),
+        logger=logger,
+)
+# Strict Validation
+auditor = get_phenopacket_auditor(AuditorLevel.STRICT)
+notepad = auditor.prepare_notepad(auditor.id())
+auditor.audit(
+    item=phenopacket,
+    notepad=notepad,
+)
+if notepad.has_errors_or_warnings(include_subsections=True):
+    return "Not Valid Phenopacket"
 else:
-    print("Phenopacket store passed all checks.")
+    return "Valid Phenopacket"
 ```
 
 # Development
