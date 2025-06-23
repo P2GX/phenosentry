@@ -4,7 +4,15 @@ from phenopackets.schema.v2.phenopackets_pb2 import Phenopacket
 from google.protobuf.json_format import Parse
 import zipfile
 
-class BasePhenopacketInfo(metaclass=ABCMeta):
+class PhenopacketInfo(metaclass=ABCMeta):
+    """
+     Abstract base class representing phenopacket information.
+
+     Properties:
+         path (str): The file path to the phenopacket.
+         phenopacket (Phenopacket): The parsed phenopacket object.
+     """
+
     @property
     @abstractmethod
     def path(self) -> str:
@@ -15,14 +23,22 @@ class BasePhenopacketInfo(metaclass=ABCMeta):
     def phenopacket(self) -> Phenopacket:
         pass
 
-class EagerPhenopacketInfo(BasePhenopacketInfo):
+class EagerPhenopacketInfo(PhenopacketInfo):
+    """
+    Represents phenopacket information that is eagerly loaded into memory.
+
+    Methods:
+        from_path(path: str) -> PhenopacketInfo: Creates an instance from a file path.
+        from_phenopacket(path: str, pp: Phenopacket) -> PhenopacketInfo: Creates an instance from a file path and a Phenopacket object.
+    """
+
     @staticmethod
-    def from_path(path: str, pp_path: pathlib.Path) -> "EagerPhenopacketInfo":
-        pp = Parse(pp_path.read_text(), Phenopacket())
+    def from_path(path: str) -> PhenopacketInfo:
+        pp = Parse(pathlib.Path(path).read_text(), Phenopacket())
         return EagerPhenopacketInfo.from_phenopacket(path, pp)
 
     @staticmethod
-    def from_phenopacket(path: str, pp: Phenopacket) -> "EagerPhenopacketInfo":
+    def from_phenopacket(path: str, pp: Phenopacket) -> PhenopacketInfo:
         return EagerPhenopacketInfo(path, pp)
 
     def __init__(self, path: str, phenopacket: Phenopacket):
@@ -54,7 +70,15 @@ class EagerPhenopacketInfo(BasePhenopacketInfo):
         return str(self)
 
 
-class ZipPhenopacketInfo(BasePhenopacketInfo):
+class ZipPhenopacketInfo(PhenopacketInfo):
+    """
+    Represents phenopacket information stored in a zip file.
+
+    Attributes:
+        path (str): The file path to the zip file containing the phenopacket.
+        pp_path (zipfile.Path): The path to the phenopacket within the zip file.
+    """
+
     def __init__(self, path: str, pp_path: zipfile.Path):
         self._path = path
         self._pp_path = pp_path

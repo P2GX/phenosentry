@@ -1,4 +1,7 @@
-from .reader import read_phenopacket_store
+from .reader import read_phenopacket, read_cohort, read_phenopackets
+
 __all__ = [
-  "read_phenopacket_store"
+  "read_cohort",
+  "read_phenopacket",
+  "read_phenopackets"
 ]

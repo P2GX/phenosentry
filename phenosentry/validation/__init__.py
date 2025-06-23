@@ -1,9 +1,6 @@
-from ._api import PhenopacketStoreAuditor
-from ._config import default_auditor
-from ._impl import qc_phenopackets
+from ._auditor import get_phenopacket_auditor, get_cohort_auditor
 
 __all__ = [
-    'PhenopacketStoreAuditor',
-    'default_auditor',
-    'qc_phenopackets',
+    'get_phenopacket_auditor',
+    'get_cohort_auditor',
 ]
