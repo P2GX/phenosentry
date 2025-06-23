@@ -58,7 +58,12 @@ else:
 Run tests with:
 
 ```bash
-pytest
+poetry run pytest
+```
+
+Run lint with:
+```bash
+poetry run ruff check phenosentry
 ```
 
 # License 

@@ -23,3 +23,5 @@ jobs:
         run: poetry install --with dev
       - name: Run tests
         run: poetry run pytest
+      - name: Run linter
+        run: poetry run ruff check phenosentry

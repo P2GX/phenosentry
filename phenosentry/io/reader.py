@@ -1,4 +1,5 @@
-import logging, typing
+import logging
+import typing
 from ..model import  CohortInfo, PhenopacketInfo, EagerPhenopacketInfo
 from pathlib import Path
 from google.protobuf.json_format import Parse, ParseError
