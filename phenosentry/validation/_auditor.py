@@ -7,10 +7,15 @@ from ..model import AuditorLevel, PhenopacketAuditor, CohortAuditor, Phenopacket
 
 class DefaultPhenopacketAuditor(PhenopacketAuditor):
     """
-    `DefaultPhenopacketAuditor` is a default implementation of the `PhenopacketAuditor`.
-    It provides a default implementation for the `make_id` method.
-    """
+      Default implementation of the `PhenopacketAuditor`.
 
+      This auditor applies a series of checks to a `PhenopacketInfo` object and logs the results
+      in a `Notepad`.
+
+      Attributes:
+          _checks (tuple): A tuple of `PhenopacketAuditor` checks to be applied.
+          _id (str): The unique identifier for this auditor.
+    """
     def __init__(
             self,
             checks: typing.Iterable[PhenopacketAuditor],
@@ -36,8 +41,14 @@ class DefaultPhenopacketAuditor(PhenopacketAuditor):
 
 class DefaultCohortAuditor(CohortAuditor):
     """
-    `DefaultCohortAuditor` is a default implementation of the `CohortAuditor`.
-    It provides a default implementation for the `id` method.
+      Default implementation of the `CohortAuditor`.
+
+      This auditor applies a series of checks to a `CohortInfo` object and logs the results
+      in a `Notepad`.
+
+      Attributes:
+          _checks (tuple): A tuple of `CohortAuditor` or `PhenopacketAuditor` checks to be applied.
+          _id (str): The unique identifier for this auditor.
     """
 
     def __init__(
@@ -72,8 +83,14 @@ class DefaultCohortAuditor(CohortAuditor):
 
 def get_phenopacket_auditor(level = AuditorLevel.DEFAULT) -> PhenopacketAuditor :
     """
-        Returns a PhenopacketStoreAuditor with default checks.
-    """
+     Creates and returns a `PhenopacketAuditor` with default checks.
+
+     Args:
+         level (AuditorLevel): The auditing level. Defaults to `AuditorLevel.DEFAULT`.
+
+     Returns:
+         PhenopacketAuditor: An instance of `DefaultPhenopacketAuditor` configured with default checks.
+     """
     store = hpotk.configure_ontology_store()
     hpo = store.load_hpo()
     checks = (NoUnwantedCharactersCheck.no_whitespace(),)
@@ -84,7 +101,10 @@ def get_phenopacket_auditor(level = AuditorLevel.DEFAULT) -> PhenopacketAuditor 
 
 def get_cohort_auditor() -> CohortAuditor:
     """
-        Returns a PhenopacketStoreAuditor with default checks.
+    Creates and returns a `CohortAuditor` with default checks.
+
+    Returns:
+        CohortAuditor: An instance of `DefaultCohortAuditor` configured with default checks.
     """
     checks = (get_phenopacket_auditor(), UniqueIdsCheck())
     return DefaultCohortAuditor(checks=checks)

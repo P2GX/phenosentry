@@ -2,9 +2,12 @@ from enum import Enum
 
 class AuditorLevel(Enum):
     """
-    Represents the level of an auditor in the system.
-    """
+       Enum representing different levels of auditing.
 
+       Attributes:
+           DEFAULT (str): Represents the default auditing level.
+           STRICT (str): Represents the strict auditing level.
+    """
     DEFAULT = "default"
     STRICT = "strict"
 

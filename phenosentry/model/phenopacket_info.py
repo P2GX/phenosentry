@@ -5,6 +5,14 @@ from google.protobuf.json_format import Parse
 import zipfile
 
 class PhenopacketInfo(metaclass=ABCMeta):
+    """
+     Abstract base class representing phenopacket information.
+
+     Properties:
+         path (str): The file path to the phenopacket.
+         phenopacket (Phenopacket): The parsed phenopacket object.
+     """
+
     @property
     @abstractmethod
     def path(self) -> str:
@@ -16,6 +24,14 @@ class PhenopacketInfo(metaclass=ABCMeta):
         pass
 
 class EagerPhenopacketInfo(PhenopacketInfo):
+    """
+    Represents phenopacket information that is eagerly loaded into memory.
+
+    Methods:
+        from_path(path: str) -> PhenopacketInfo: Creates an instance from a file path.
+        from_phenopacket(path: str, pp: Phenopacket) -> PhenopacketInfo: Creates an instance from a file path and a Phenopacket object.
+    """
+
     @staticmethod
     def from_path(path: str) -> PhenopacketInfo:
         pp = Parse(pathlib.Path(path).read_text(), Phenopacket())
@@ -55,6 +71,14 @@ class EagerPhenopacketInfo(PhenopacketInfo):
 
 
 class ZipPhenopacketInfo(PhenopacketInfo):
+    """
+    Represents phenopacket information stored in a zip file.
+
+    Attributes:
+        path (str): The file path to the zip file containing the phenopacket.
+        pp_path (zipfile.Path): The path to the phenopacket within the zip file.
+    """
+
     def __init__(self, path: str, pp_path: zipfile.Path):
         self._path = path
         self._pp_path = pp_path

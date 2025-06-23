@@ -8,7 +8,11 @@ from ..model import PhenopacketInfo, CohortInfo, PhenopacketAuditor, CohortAudit
 # Cohort Level Checks
 class UniqueIdsCheck(CohortAuditor):
     """
-    Check that phenopacket id is unique within the entire cohort.
+    A check to ensure that all phenopacket IDs within a cohort are unique.
+
+    Methods:
+        id() -> str: Returns the unique identifier for this check.
+        audit(item: CohortInfo, notepad: Notepad): Performs the uniqueness check on the cohort.
     """
 
     def id(self) -> str:
@@ -35,8 +39,14 @@ class UniqueIdsCheck(CohortAuditor):
 # Phenopacket Level Checks
 class NoUnwantedCharactersCheck(PhenopacketAuditor):
     """
-    Check that phenopacket elements do not include any unwanted characters (e.g. whitespace).
-    """
+     A check to ensure that phenopacket elements do not include unwanted characters (e.g., whitespace).
+
+     Methods:
+         no_whitespace(whitespaces: typing.Iterable[str]) -> NoUnwantedCharactersCheck:
+             Creates an instance of the check with specified unwanted characters.
+         id() -> str: Returns the unique identifier for this check.
+         audit(item: PhenopacketInfo, notepad: Notepad): Performs the unwanted character check on the phenopacket.
+     """
 
     @staticmethod
     def no_whitespace(
@@ -97,9 +107,12 @@ class NoUnwantedCharactersCheck(PhenopacketAuditor):
 
 
 class DeprecatedTermIdCheck(PhenopacketAuditor):
-
     """
-    Check that all term IDs in the phenopackets do not use deprecated identifiers.
+    A check to ensure that all term IDs in the phenopackets do not use deprecated identifiers.
+
+    Methods:
+        id() -> str: Returns the unique identifier for this check.
+        audit(item: PhenopacketInfo, notepad: Notepad): Performs the deprecated term ID check on the phenopacket.
     """
 
     def __init__(self, ontology: Ontology):

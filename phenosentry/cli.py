@@ -36,6 +36,18 @@ def main():
 )
 @click.option('--cohort', is_flag=True, help='Indicates that the input is a cohort.')
 def validate(path, level, is_cohort):
+    """
+    Validates phenopacket or cohort data based on the provided options.
+
+    Args:
+        path (str): The file or directory path to the phenopacket(s) or cohort.
+        level (str): The validation level, either 'strict' or 'default'.
+        is_cohort (bool): Flag indicating whether the input is a cohort.
+
+    Returns:
+        int: 0 if validation passes without errors or warnings, 1 otherwise.
+    """
+
     setup_logging()
     logger = logging.getLogger(__name__)
     pathed = pathlib.Path(path)
