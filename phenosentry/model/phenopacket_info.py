@@ -33,9 +33,9 @@ class EagerPhenopacketInfo(PhenopacketInfo):
     """
 
     @staticmethod
-    def from_path(path: str) -> PhenopacketInfo:
-        pp = Parse(pathlib.Path(path).read_text(), Phenopacket())
-        return EagerPhenopacketInfo.from_phenopacket(path, pp)
+    def from_path(path: pathlib.Path) -> PhenopacketInfo:
+        pp = Parse(path.read_text(), Phenopacket())
+        return EagerPhenopacketInfo.from_phenopacket(str(path), pp)
 
     @staticmethod
     def from_phenopacket(path: str, pp: Phenopacket) -> PhenopacketInfo:
