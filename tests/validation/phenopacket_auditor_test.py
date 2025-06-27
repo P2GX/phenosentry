@@ -1,7 +1,7 @@
-import logging, typing, pytest
-
-from phenosentry.io import read_phenopacket, read_phenopackets
-from phenosentry.model import PhenopacketAuditor, PhenopacketInfo, EagerPhenopacketInfo, AuditorLevel
+import logging, pytest
+from pathlib import Path
+from phenosentry.io import read_phenopacket
+from phenosentry.model import PhenopacketAuditor, PhenopacketInfo, AuditorLevel
 from phenosentry.validation import get_phenopacket_auditor
 
 class TestPhenopacketAuditor:
@@ -19,14 +19,14 @@ class TestPhenopacketAuditor:
         self,
         fpath_strict_fail: str,
     ) -> PhenopacketInfo:
-        return read_phenopacket(fpath_strict_fail, logging.getLogger())
+        return read_phenopacket(Path(fpath_strict_fail), logging.getLogger())
 
     @pytest.fixture(scope="class")
     def phenopacket_default_fail(
         self,
         fpath_default_fail: str,
     ) -> PhenopacketInfo:
-        return read_phenopacket(fpath_default_fail, logging.getLogger())
+        return read_phenopacket(Path(fpath_default_fail), logging.getLogger())
 
     def test_strict_phenopacket(
         self,

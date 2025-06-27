@@ -1,5 +1,7 @@
 import os
 import pytest
+from pathlib import Path
+import zipfile
 
 @pytest.fixture(scope="session")
 def fpath_test_data() -> str:
@@ -13,16 +15,35 @@ def fpath_ps_folder(
     return os.path.join(fpath_test_data, "phenopackets")
 
 @pytest.fixture(scope="session")
-def fpath_strict_fail(
+def fpath_ps_folder_zip(
     fpath_test_data: str,
 ) -> str:
-    return os.path.join(fpath_test_data, "strict-fail-phenopacket.json")
+    return os.path.join(fpath_test_data, "phenopackets.zip")
+
+@pytest.fixture(scope="session")
+def fpath_healthy_phenopacket(
+    fpath_ps_folder: str,
+) -> str:
+    return os.path.join(fpath_ps_folder, "PMID_28239884_Family1proband.json")
+
+@pytest.fixture(scope="session")
+def fpath_healthy_phenopacket_zip(
+    fpath_test_data: str,
+) -> str:
+    return os.path.join(fpath_test_data, "healthy.zip")
+
+
+@pytest.fixture(scope="session")
+def fpath_strict_fail(
+    fpath_test_data: str,
+) -> Path:
+    return Path(os.path.join(fpath_test_data, "strict-fail-phenopacket.json"))
 
 @pytest.fixture(scope="session")
 def fpath_default_fail(
     fpath_test_data: str,
-) -> str:
-    return os.path.join(fpath_test_data, "default-fail-phenopacket.json")
+) -> Path:
+    return Path(os.path.join(fpath_test_data, "default-fail-phenopacket.json"))
 
 @pytest.fixture(scope="session")
 def fpath_healthy_cohort(
