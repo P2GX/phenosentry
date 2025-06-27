@@ -60,7 +60,7 @@ def read_cohort(
       Reads a cohort of phenopackets from a specified directory.
 
       Args:
-          :param directory (str): The path to the directory containing the cohort of phenopackets.
+          :param directory (Path): The path to the directory containing the cohort of phenopackets.
           :param logger (logging.Logger): Logger instance for logging messages.
           :param lazy (LoadStrategy): The strategy to use for loading phenopackets.
             Defaults to LoadStrategy.EAGER.
@@ -69,7 +69,11 @@ def read_cohort(
           CohortInfo: An object containing information about the cohort, including its name, path, and phenopackets.
       """
     logger.info("Reading cohort at `%s`", directory)
-    name = os.path.basename(directory)
+    name = ""
+    if isinstance(directory, zipfile.Path) and directory.name.endswith(".zip"):
+        name = directory.name[:-4]
+    else:
+        name = directory.stem
     phenopackets = read_phenopackets(directory, logger, lazy)
     return CohortInfo(name=name, path=str(directory), phenopackets=phenopackets)
 
