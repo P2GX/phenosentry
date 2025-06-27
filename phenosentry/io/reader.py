@@ -1,7 +1,7 @@
 import logging
 import typing
 import zipfile
-
+import os
 from ..model import CohortInfo, PhenopacketInfo, EagerPhenopacketInfo, ZipPhenopacketInfo
 from pathlib import Path
 from google.protobuf.json_format import ParseError
@@ -69,7 +69,7 @@ def read_cohort(
           CohortInfo: An object containing information about the cohort, including its name, path, and phenopackets.
       """
     logger.info("Reading cohort at `%s`", directory)
-    name = directory.stem
+    name = os.path.basename(directory)
     phenopackets = read_phenopackets(directory, logger, lazy)
     return CohortInfo(name=name, path=str(directory), phenopackets=phenopackets)
 
