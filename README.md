@@ -33,13 +33,14 @@ or in Python code:
 from phenosentry.model import AuditorLevel
 from phenosentry.validation import get_phenopacket_auditor
 from phenosentry.io import read_phenopacket
+from pathlib import Path
 import logging
 # Single Phenopacket Validation
 path = "path/to/phenopacket.json"
 logger = logging.getLogger("phenosentry")
 phenopacket = read_phenopacket(
-        directory=str(path),
-        logger=logger,
+        directory=Path(path),
+        logger=logger
 )
 # Strict Validation
 auditor = get_phenopacket_auditor(AuditorLevel.STRICT)
