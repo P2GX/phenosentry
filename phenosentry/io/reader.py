@@ -1,7 +1,7 @@
 import logging
 import typing
 import zipfile
-import os
+
 from ..model import CohortInfo, PhenopacketInfo, EagerPhenopacketInfo, ZipPhenopacketInfo
 from pathlib import Path
 from google.protobuf.json_format import ParseError
@@ -81,5 +81,5 @@ def find_json_files(directory):
     for entry in directory.iterdir():
         if entry.is_dir():
             yield from find_json_files(entry)
-        elif entry.suffix == ".json":
+        elif entry.name.endswith(".json"):
             yield entry
