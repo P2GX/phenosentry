@@ -9,6 +9,7 @@ class PhenopacketAuditor(Auditor[Phenopacket], metaclass=abc.ABCMeta):
     """
     Represents information about a cohort of phenopackets.
 
+    TODO: update the attributes
     Attributes:
         name (str): The name of the cohort.
         path (str): The file path to the cohort directory or file.
