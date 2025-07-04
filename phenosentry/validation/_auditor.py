@@ -1,9 +1,11 @@
 import typing
-from stairval.notepad import Notepad
 import hpotk
 
+from stairval.notepad import Notepad
+from phenopackets.schema.v2.phenopackets_pb2 import Phenopacket, Cohort
+
 from ._checks import NoUnwantedCharactersCheck, DeprecatedTermIdCheck, UniqueIdsCheck
-from ..model import AuditorLevel, PhenopacketAuditor, CohortAuditor, PhenopacketInfo, CohortInfo
+from ..model import AuditorLevel, PhenopacketAuditor, CohortAuditor
 
 class DefaultPhenopacketAuditor(PhenopacketAuditor):
     """
@@ -26,7 +28,7 @@ class DefaultPhenopacketAuditor(PhenopacketAuditor):
 
     def audit(
             self,
-            item: PhenopacketInfo,
+            item: Phenopacket,
             notepad: Notepad,
     ):
         for check in self._checks:
@@ -43,9 +45,10 @@ class DefaultCohortAuditor(CohortAuditor):
     """
       Default implementation of the `CohortAuditor`.
 
-      This auditor applies a series of checks to a `CohortInfo` object and logs the results
+      This auditor applies a series of checks to a `Cohort` and logs the results
       in a `Notepad`.
-
+      
+      # TODO: GPT does not know that these attributes are private? ☻
       Attributes:
           _checks (tuple): A tuple of `CohortAuditor` or `PhenopacketAuditor` checks to be applied.
           _id (str): The unique identifier for this auditor.
@@ -61,15 +64,15 @@ class DefaultCohortAuditor(CohortAuditor):
 
     def audit(
             self,
-            item: CohortInfo,
+            item: Cohort,
             notepad: Notepad,
     ):
         for check in self._checks:
             if isinstance(check, PhenopacketAuditor):
-                sub_notepad = notepad.add_subsection(check.id())
-                for phenopacket_info in item.phenopackets:
+                for i, phenopacket in enumerate(item.members):
+                    sub_notepad = notepad.add_subsection(f"#{i}")
                     check.audit(
-                        item=phenopacket_info,
+                        item=phenopacket,
                         notepad=sub_notepad,
                     )
             else:

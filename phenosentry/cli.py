@@ -2,9 +2,14 @@ import click
 import logging
 import pathlib
 import io
+import os
+import typing
 from phenosentry.model.auditor_level import AuditorLevel
 from .validation import get_cohort_auditor, get_phenopacket_auditor
-from .io import read_phenopacket, read_cohort, read_phenopackets
+
+from google.protobuf.message import Message
+from google.protobuf.json_format import Parse
+from phenopackets.schema.v2.phenopackets_pb2 import Phenopacket, Cohort
 
 def setup_logging():
     level = logging.INFO
@@ -21,6 +26,20 @@ def setup_logging():
     ch.setFormatter(formatter)
     # add ch to logger
     logger.addHandler(ch)
+
+
+MSG = typing.TypeVar("MSG", bound=Message, covariant=True)
+
+def read_pb_message(fpath: typing.Union[str, pathlib.Path], msg: MSG) -> MSG:
+    with open(fpath) as fh:
+        return Parse(fh.read(), msg)
+
+
+def read_cohort_folder(fpath_dir: str) -> Cohort:
+    return Cohort(
+        members=(read_pb_message(os.path.join(fpath_dir, fp), Phenopacket()) for fp in os.listdir(fpath_dir)),
+    )
+
 
 @click.group()
 def main():
@@ -51,11 +70,11 @@ def validate(path, level, is_cohort):
     setup_logging()
     logger = logging.getLogger(__name__)
     pathed = pathlib.Path(path)
-    notepad = None
+    # notepad = None
     if pathed.is_file():
-        phenopacket = read_phenopacket(
-            directory=str(path),
-            logger=logger,
+        phenopacket = read_pb_message(
+            pathed,
+            Phenopacket()
         )
         # single phenopacket
         auditor = get_phenopacket_auditor(level)
@@ -67,9 +86,8 @@ def validate(path, level, is_cohort):
     elif pathed.is_dir():
         # cohort of phenopackets
         if is_cohort:
-            cohort = read_cohort(
-                directory=str(path),
-                logger=logger,
+            cohort = read_cohort_folder(
+                str(path),
             )
             auditor = get_cohort_auditor()
             notepad = auditor.prepare_notepad(auditor.id())
@@ -81,13 +99,17 @@ def validate(path, level, is_cohort):
             # We iterate phenopackets and validate them seperately
             auditor = get_phenopacket_auditor(level)
             notepad = auditor.prepare_notepad(auditor.id())
-            phenopackets = read_phenopackets(str(path), logger=logger)
-            for phenopacket in phenopackets:
+            for pp_path in os.listdir(path):
+                phenopacket = read_pb_message(os.path.join(path, pp_path), Phenopacket())
                 notepad.add_subsection("Phenopacket {}".format(phenopacket.id))
                 auditor.audit(
                     item=phenopacket,
                     notepad=notepad,
                 )
+    else:
+        # TODO: troubleshoot
+        logger.error("Invalid CLI configuration")
+        return 1
 
 
     buf = io.StringIO()

@@ -1,9 +1,11 @@
 import typing
 from collections import Counter, defaultdict
 from stairval.notepad import Notepad
-from hpotk.ontology import Ontology
-from ..model import PhenopacketInfo, CohortInfo, PhenopacketAuditor, CohortAuditor
+from hpotk.ontology import MinimalOntology
+from ..model import PhenopacketAuditor, CohortAuditor
 
+
+from phenopackets.schema.v2.phenopackets_pb2 import Cohort, Phenopacket
 
 # Cohort Level Checks
 class UniqueIdsCheck(CohortAuditor):
@@ -20,15 +22,14 @@ class UniqueIdsCheck(CohortAuditor):
 
     def audit(
         self,
-        item: CohortInfo,
+        item: Cohort,
         notepad: Notepad,
     ):
         id_counter = Counter()
         pp_id2cohort = defaultdict(set)
-        for pp_info in item.phenopackets:
-            pp_id = pp_info.phenopacket.id
-            pp_id2cohort[pp_id].add(item.name)
-            id_counter[pp_id] += 1
+        for pp in item.members:
+            pp_id2cohort[pp.id].add(pp.id)
+            id_counter[pp.id] += 1
 
         repeated = {pp_id: count for pp_id, count in id_counter.items() if count > 1}
 
@@ -65,23 +66,23 @@ class NoUnwantedCharactersCheck(PhenopacketAuditor):
 
     def audit(
         self,
-        item: PhenopacketInfo,
+        item: Phenopacket,
         notepad: Notepad,
     ):
             pp_pad = notepad.add_subsection(self.id())
-            pp = item.phenopacket
-            self._check_unwanted_characters(pp.id, pp_pad.add_subsection("id"))
+            
+            self._check_unwanted_characters(item.id, pp_pad.add_subsection("id"))
             _, subject_id_pad = pp_pad.add_subsections("subject", "id")
-            self._check_unwanted_characters(pp.subject.id, subject_id_pad)
+            self._check_unwanted_characters(item.subject.id, subject_id_pad)
 
             # Disease name in diseases and variant interpretations
             disease_pad = pp_pad.add_subsection("disease")
-            for i, disease in enumerate(pp.diseases):
+            for i, disease in enumerate(item.diseases):
                 _, _, label_pad = disease_pad.add_subsections(f"#{i}", "term", "label")
                 self._check_unwanted_characters(disease.term.label, label_pad)
 
             interpretation_pad = pp_pad.add_subsection("interpretations")
-            for i, interpretation in enumerate(pp.interpretations):
+            for i, interpretation in enumerate(item.interpretations):
                 id_pad = interpretation_pad.add_subsection("id")
                 self._check_unwanted_characters(interpretation.id, id_pad)
                 _, _, label_pad = interpretation_pad.add_subsections("diagnosis", "disease", "label")
@@ -91,7 +92,7 @@ class NoUnwantedCharactersCheck(PhenopacketAuditor):
 
             # PubMed title
             _, ers_pad = pp_pad.add_subsections("meta_data", "external_references")
-            for i, er in enumerate(pp.meta_data.external_references):
+            for i, er in enumerate(item.meta_data.external_references):
                 _, er_pad = ers_pad.add_subsections(f"#{i}", "description")
                 self._check_unwanted_characters(er.description, er_pad)
 
@@ -115,7 +116,7 @@ class DeprecatedTermIdCheck(PhenopacketAuditor):
         audit(item: PhenopacketInfo, notepad: Notepad): Performs the deprecated term ID check on the phenopacket.
     """
 
-    def __init__(self, ontology: Ontology):
+    def __init__(self, ontology: MinimalOntology):
         self.ontology = ontology
 
     def id(self) -> str:
@@ -123,15 +124,14 @@ class DeprecatedTermIdCheck(PhenopacketAuditor):
 
     def audit(
         self,
-        item: PhenopacketInfo,
+        item: Phenopacket,
         notepad: Notepad,
     ):
         pp_pad = notepad.add_subsection(self.id())
-        pp = item.phenopacket
-        for phenotype in pp.phenotypic_features:
+        for phenotype in item.phenotypic_features:
             term = self.ontology.get_term(phenotype.type.id)
-            if term is not None and term.is_obsolete or term.identifier.value != phenotype.type.id:
-                msg = f"`{pp.id}` has a deprecated term ID `{phenotype.type.id}`"
+            if term is not None and (term.is_obsolete or term.identifier.value != phenotype.type.id):
+                msg = f"`{item.id}` has a deprecated term ID `{phenotype.type.id}`"
                 pp_pad.add_error(msg)
 
 

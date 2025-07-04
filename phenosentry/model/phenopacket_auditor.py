@@ -1,10 +1,11 @@
 import abc
 
+from phenopackets.schema.v2.phenopackets_pb2 import Phenopacket
+
 from stairval import Auditor
-from ..model import PhenopacketInfo
 
-
-class PhenopacketAuditor(Auditor[PhenopacketInfo], metaclass=abc.ABCMeta):
+# TODO: reorganize the package structure. The auditors for the top-level Phenopacket Schema elements belong to the top-level of the package.
+class PhenopacketAuditor(Auditor[Phenopacket], metaclass=abc.ABCMeta):
     """
     Represents information about a cohort of phenopackets.
 
