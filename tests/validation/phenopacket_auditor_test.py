@@ -1,8 +1,9 @@
 import logging, pytest
 from pathlib import Path
 from phenosentry.io import read_phenopacket
-from phenosentry.model import PhenopacketAuditor, PhenopacketInfo, AuditorLevel
+from phenosentry.model import PhenopacketAuditor, AuditorLevel
 from phenosentry.validation import get_phenopacket_auditor
+from phenopackets.schema.v2.phenopackets_pb2 import Phenopacket
 
 class TestPhenopacketAuditor:
 
@@ -18,21 +19,21 @@ class TestPhenopacketAuditor:
     def phenopacket_strict_fail(
         self,
         fpath_strict_fail: str,
-    ) -> PhenopacketInfo:
+    ) -> Phenopacket:
         return read_phenopacket(Path(fpath_strict_fail), logging.getLogger())
 
     @pytest.fixture(scope="class")
     def phenopacket_default_fail(
         self,
         fpath_default_fail: str,
-    ) -> PhenopacketInfo:
+    ) -> Phenopacket:
         return read_phenopacket(Path(fpath_default_fail), logging.getLogger())
 
     def test_strict_phenopacket(
         self,
         strict_auditor: PhenopacketAuditor,
         auditor: PhenopacketAuditor,
-        phenopacket_strict_fail: PhenopacketInfo,
+        phenopacket_strict_fail: Phenopacket,
     ):
         notepad = PhenopacketAuditor.prepare_notepad("test-ps")
         auditor.audit(
@@ -50,7 +51,7 @@ class TestPhenopacketAuditor:
         self,
         strict_auditor: PhenopacketAuditor,
         auditor: PhenopacketAuditor,
-        phenopacket_default_fail: PhenopacketInfo
+        phenopacket_default_fail: Phenopacket
     ):
         notepad_strict = PhenopacketAuditor.prepare_notepad("test-ps")
         notepad = PhenopacketAuditor.prepare_notepad("test-ps")

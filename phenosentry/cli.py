@@ -54,7 +54,7 @@ def validate(path, level, is_cohort):
     notepad = None
     if pathed.is_file():
         phenopacket = read_phenopacket(
-            directory=str(path),
+            path=path,
             logger=logger,
         )
         # single phenopacket
@@ -68,8 +68,8 @@ def validate(path, level, is_cohort):
         # cohort of phenopackets
         if is_cohort:
             cohort = read_cohort(
-                directory=str(path),
-                logger=logger,
+                directory=path,
+                logger=logger
             )
             auditor = get_cohort_auditor()
             notepad = auditor.prepare_notepad(auditor.id())
@@ -81,7 +81,7 @@ def validate(path, level, is_cohort):
             # We iterate phenopackets and validate them seperately
             auditor = get_phenopacket_auditor(level)
             notepad = auditor.prepare_notepad(auditor.id())
-            phenopackets = read_phenopackets(str(path), logger=logger)
+            phenopackets = read_phenopackets(path, logger=logger)
             for phenopacket in phenopackets:
                 notepad.add_subsection("Phenopacket {}".format(phenopacket.id))
                 auditor.audit(
