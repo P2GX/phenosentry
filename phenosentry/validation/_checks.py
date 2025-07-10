@@ -34,7 +34,7 @@ class UniqueIdsCheck(CohortAuditor):
         repeated = {pp_id: count for pp_id, count in id_counter.items() if count > 1}
 
         for pp_id, count in repeated.items():
-            msg = f"`{pp_id}` is present in {count} cohorts: {pp_id2cohort[pp_id]}"
+            msg = f"`{pp_id}` is not unique in cohort `{next(iter(pp_id2cohort[pp_id]))}`"
             notepad.add_error(msg)
 
 # Phenopacket Level Checks
