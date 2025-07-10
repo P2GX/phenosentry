@@ -51,7 +51,6 @@ def validate(path, level, is_cohort):
     setup_logging()
     logger = logging.getLogger(__name__)
     pathed = pathlib.Path(path)
-    notepad = None
     if pathed.is_file():
         phenopacket = read_phenopacket(
             path=path,
@@ -88,6 +87,10 @@ def validate(path, level, is_cohort):
                     item=phenopacket,
                     notepad=notepad,
                 )
+    else:
+        # TODO: troubleshoot
+        logger.error("Invalid CLI configuration")
+        return 1
 
 
     buf = io.StringIO()

@@ -30,7 +30,7 @@ class TestCohortAuditor:
             auditor: CohortAuditor,
             cohort_pass: Cohort,
     ):
-        notepad = CohortAuditor.prepare_notepad("test-ps")
+        notepad = auditor.prepare_notepad("test-ps")
         auditor.audit(
             item=cohort_pass,
             notepad=notepad,

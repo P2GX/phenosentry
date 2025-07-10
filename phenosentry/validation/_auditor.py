@@ -45,7 +45,7 @@ class DefaultCohortAuditor(CohortAuditor):
     """
       Default implementation of the `CohortAuditor`.
 
-      This auditor applies a series of checks to a `CohortInfo` object and logs the results
+      This auditor applies a series of checks to a `Cohort` and logs the results
       in a `Notepad`.
 
       Attributes:

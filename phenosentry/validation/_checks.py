@@ -2,9 +2,8 @@ import typing
 from collections import Counter, defaultdict
 from stairval.notepad import Notepad
 from hpotk.ontology import Ontology
-from ..model import PhenopacketAuditor, CohortAuditor
-from phenopackets.schema.v2.phenopackets_pb2 import Phenopacket
-from phenopackets.schema.v2.phenopackets_pb2 import Cohort
+from ..model import PhenopacketInfo, CohortInfo, PhenopacketAuditor, CohortAuditor
+
 
 # Cohort Level Checks
 class UniqueIdsCheck(CohortAuditor):
@@ -27,9 +26,8 @@ class UniqueIdsCheck(CohortAuditor):
         id_counter = Counter()
         pp_id2cohort = defaultdict(set)
         for pp in item.members:
-            pp_id = pp.id
-            pp_id2cohort[pp_id].add(item.id)
-            id_counter[pp_id] += 1
+            pp_id2cohort[pp.id].add(pp.id)
+            id_counter[pp.id] += 1
 
         repeated = {pp_id: count for pp_id, count in id_counter.items() if count > 1}
 
@@ -115,7 +113,7 @@ class DeprecatedTermIdCheck(PhenopacketAuditor):
         audit(item: PhenopacketInfo, notepad: Notepad): Performs the deprecated term ID check on the phenopacket.
     """
 
-    def __init__(self, ontology: Ontology):
+    def __init__(self, ontology: MinimalOntology):
         self.ontology = ontology
 
     def id(self) -> str:
@@ -129,6 +127,8 @@ class DeprecatedTermIdCheck(PhenopacketAuditor):
         pp_pad = notepad.add_subsection(self.id())
         for phenotype in item.phenotypic_features:
             term = self.ontology.get_term(phenotype.type.id)
-            if term is not None and term.is_obsolete or term.identifier.value != phenotype.type.id:
+            if term is not None and (term.is_obsolete or term.identifier.value != phenotype.type.id):
                 msg = f"`{item.id}` has a deprecated term ID `{phenotype.type.id}`"
                 pp_pad.add_error(msg)
+
+
