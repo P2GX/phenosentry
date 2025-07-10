@@ -1,7 +1,10 @@
 import os
 import pytest
 from pathlib import Path
-import zipfile
+import typing
+
+from google.protobuf.message import Message
+from google.protobuf.json_format import Parse
 
 @pytest.fixture(scope="session")
 def fpath_test_data() -> str:
@@ -56,3 +59,11 @@ def fpath_dirty_cohort(
     fpath_test_data: str,
 ) -> str:
     return os.path.join(fpath_test_data, "cohort_fail")
+
+
+MSG = typing.TypeVar("MSG", bound=Message, covariant=True)
+
+
+def read_pb_message(fpath: typing.Union[str, Path], msg: MSG) -> MSG:
+    with open(fpath) as fh:
+        return Parse(fh.read(), msg)

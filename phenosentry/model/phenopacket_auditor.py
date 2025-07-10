@@ -1,10 +1,10 @@
 import abc
 
 from stairval import Auditor
-from ..model import PhenopacketInfo
+from phenopackets.schema.v2.phenopackets_pb2 import Phenopacket
 
 
-class PhenopacketAuditor(Auditor[PhenopacketInfo], metaclass=abc.ABCMeta):
+class PhenopacketAuditor(Auditor[Phenopacket], metaclass=abc.ABCMeta):
     """
     Represents information about a cohort of phenopackets.
 

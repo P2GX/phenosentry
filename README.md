@@ -3,10 +3,7 @@
 A Python package for ensuring data quality in phenopackets and collections of phenopackets.
 
 ## Features
-
-- Load phenopacket stores from the phenopacket-store or ZIP archives
-- Load any phenopacket or phenopackets from a folder into a phenopacket store
-- Validate phenopacket stores with quality checks
+- Validate phenopacket with quality checks
 
 ## Installation
 

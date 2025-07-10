@@ -1,8 +1,9 @@
 import logging, pytest
 from pathlib import Path
 from phenosentry.io import read_cohort
-from phenosentry.model import CohortAuditor, CohortInfo
+from phenosentry.model import CohortAuditor
 from phenosentry.validation import get_cohort_auditor
+from phenopackets.schema.v2.phenopackets_pb2 import Cohort
 
 class TestCohortAuditor:
 
@@ -14,29 +15,29 @@ class TestCohortAuditor:
     def cohort_pass(
             self,
             fpath_healthy_cohort: str,
-    ) -> CohortInfo:
+    ) -> Cohort:
         return read_cohort(Path(fpath_healthy_cohort), logging.getLogger())
 
     @pytest.fixture(scope="class")
     def cohort_fail(
             self,
             fpath_dirty_cohort: str,
-    ) -> CohortInfo:
+    ) -> Cohort:
         return read_cohort(Path(fpath_dirty_cohort), logging.getLogger())
 
     def test_cohort_pass(
             self,
             auditor: CohortAuditor,
-            cohort_pass: CohortInfo,
+            cohort_pass: Cohort,
     ):
-        notepad = CohortAuditor.prepare_notepad("test-ps")
+        notepad = auditor.prepare_notepad("test-ps")
         auditor.audit(
             item=cohort_pass,
             notepad=notepad,
         )
         assert not notepad.has_errors_or_warnings(include_subsections=False)
 
-    def test_cohort_fail(self, auditor: CohortAuditor, cohort_fail: CohortInfo):
+    def test_cohort_fail(self, auditor: CohortAuditor, cohort_fail: Cohort):
         notepad = CohortAuditor.prepare_notepad("test-ps")
         auditor.audit(
             item=cohort_fail,
