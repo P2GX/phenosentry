@@ -9,8 +9,6 @@ readme = "README.md"
 python = ">=3.10"
 click = "^8.2.1"  # Should be an optional dependency for a CLI extra
 phenopackets = "^2.0.2.post4"
-# certifi = "^2025.4.26"  # We certainly don't need these
-# pandas = "^2.2.3"
 stairval = "^0.2.0"
 hpo-toolkit = "^0.5.5"  # Should be an optional dependency
 
@@ -23,4 +21,4 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-phenosentry = "phenosentry.cli:main"  # TODO: phenosentry.cli -> phenosentry._cli
+phenosentry = "phenosentry.cli:main"

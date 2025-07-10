@@ -1,8 +1,9 @@
 import typing
 from collections import Counter, defaultdict
 from stairval.notepad import Notepad
-from hpotk.ontology import Ontology
-from ..model import PhenopacketInfo, CohortInfo, PhenopacketAuditor, CohortAuditor
+from hpotk.ontology import MinimalOntology
+from ..model import PhenopacketAuditor, CohortAuditor
+from phenopackets.schema.v2.phenopackets_pb2 import Phenopacket, Cohort
 
 
 # Cohort Level Checks
