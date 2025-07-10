@@ -27,7 +27,7 @@ class UniqueIdsCheck(CohortAuditor):
         id_counter = Counter()
         pp_id2cohort = defaultdict(set)
         for pp in item.members:
-            pp_id2cohort[pp.id].add(pp.id)
+            pp_id2cohort[pp.id].add(item.id)
             id_counter[pp.id] += 1
 
         repeated = {pp_id: count for pp_id, count in id_counter.items() if count > 1}
