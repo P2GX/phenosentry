@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "phenosentry"
-version = "0.1.5"
+version = "0.1.6"
 description = "A tool and library for quality control and valdiation of GA4GH Phenopackets."
 authors = ["Michael Gargano <Michael.Gargano@jax.org>", "Daniel Danis <daniel.gordon.danis@protonmail.com>"]
 readme = "README.md"
