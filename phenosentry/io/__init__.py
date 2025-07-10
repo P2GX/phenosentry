@@ -1,5 +1,5 @@
 from .reader import read_phenopackets, read_phenopacket, read_cohort
-all = [
+__all__ = [
     "read_phenopackets",
     "read_phenopacket",
     "read_cohort"
