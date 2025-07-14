@@ -1,10 +1,34 @@
+import enum
 import typing
-from stairval.notepad import Notepad
+
 import hpotk
 from phenopackets.schema.v2.phenopackets_pb2 import Phenopacket
 from phenopackets.schema.v2.phenopackets_pb2 import Cohort
+from stairval.notepad import Notepad
+
+from ._api import PhenopacketAuditor, CohortAuditor
 from ._checks import NoUnwantedCharactersCheck, DeprecatedTermIdCheck, UniqueIdsCheck
-from ..model import AuditorLevel, PhenopacketAuditor, CohortAuditor
+
+
+class AuditorLevel(enum.Enum):
+    """
+       Enum representing different levels of auditing.
+
+       Attributes:
+           DEFAULT (str): Represents the default auditing level.
+           STRICT (str): Represents the strict auditing level.
+    """
+    DEFAULT = "default"
+    STRICT = "strict"
+
+    def __init__(self, level: str,):
+        self.level = level
+
+    def __str__(self):
+        return f"AuditorLevel(level={self.level})"
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class DefaultPhenopacketAuditor(PhenopacketAuditor):
