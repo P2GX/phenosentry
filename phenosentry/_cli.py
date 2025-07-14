@@ -1,9 +1,10 @@
-import click
+import io
 import logging
 import pathlib
-import io
-from phenosentry.model.auditor_level import AuditorLevel
-from .validation import get_cohort_auditor, get_phenopacket_auditor
+
+import click
+
+from .validation import AuditorLevel, get_cohort_auditor, get_phenopacket_auditor
 from .io import read_phenopacket, read_cohort, read_phenopackets
 
 def setup_logging():

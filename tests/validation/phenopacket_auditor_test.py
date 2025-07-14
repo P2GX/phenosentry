@@ -1,8 +1,7 @@
 import logging, pytest
 from pathlib import Path
 from phenosentry.io import read_phenopacket
-from phenosentry.model import PhenopacketAuditor, AuditorLevel
-from phenosentry.validation import get_phenopacket_auditor
+from phenosentry.validation import PhenopacketAuditor, AuditorLevel, get_phenopacket_auditor
 from phenopackets.schema.v2.phenopackets_pb2 import Phenopacket
 
 class TestPhenopacketAuditor:
