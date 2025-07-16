@@ -1,11 +1,15 @@
 import io
 import logging
 import pathlib
-
-import click
-
 from .validation import AuditorLevel, get_cohort_auditor, get_phenopacket_auditor
 from .io import read_phenopacket, read_cohort, read_phenopackets
+
+
+try:
+    import click
+except ImportError:
+    print("Click is required for the CLI. Please install it via 'pip install phenosentry[cli]'")
+    exit(1)
 
 def setup_logging():
     level = logging.INFO
