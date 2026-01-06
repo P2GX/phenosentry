@@ -39,21 +39,22 @@ class UniqueIdsCheck(CohortAuditor):
             msg = f"`{pp_id}` is not unique in cohort `{next(iter(pp_id2cohort[pp_id]))}`"
             notepad.add_error(msg)
 
+
 # Phenopacket Level Checks
 class NoUnwantedCharactersCheck(PhenopacketAuditor):
     """
-     A check to ensure that phenopacket elements do not include unwanted characters (e.g., whitespace).
+    A check to ensure that phenopacket elements do not include unwanted characters (e.g., whitespace).
 
-     Methods:
-         no_whitespace(whitespaces: typing.Iterable[str]) -> NoUnwantedCharactersCheck:
-             Creates an instance of the check with specified unwanted characters.
-         id() -> str: Returns the unique identifier for this check.
-         audit(item: PhenopacketInfo, notepad: Notepad): Performs the unwanted character check on the phenopacket.
-     """
+    Methods:
+        no_whitespace(whitespaces: typing.Iterable[str]) -> NoUnwantedCharactersCheck:
+            Creates an instance of the check with specified unwanted characters.
+        id() -> str: Returns the unique identifier for this check.
+        audit(item: PhenopacketInfo, notepad: Notepad): Performs the unwanted character check on the phenopacket.
+    """
 
     @staticmethod
     def no_whitespace(
-        whitespaces: typing.Iterable['str'] = ("\t", "\n", "\r\n"),
+        whitespaces: typing.Iterable["str"] = ("\t", "\n", "\r\n"),
     ) -> "NoUnwantedCharactersCheck":
         return NoUnwantedCharactersCheck(whitespaces)
 
@@ -71,32 +72,29 @@ class NoUnwantedCharactersCheck(PhenopacketAuditor):
         item: Phenopacket,
         notepad: Notepad,
     ):
-            pp_pad = notepad.add_subsection(self.id())
-            self._check_unwanted_characters(item.id, pp_pad.add_subsection("id"))
-            _, subject_id_pad = pp_pad.add_subsections("subject", "id")
-            self._check_unwanted_characters(item.subject.id, subject_id_pad)
+        pp_pad = notepad.add_subsection(self.id())
+        self._check_unwanted_characters(item.id, pp_pad.add_subsection("id"))
+        _, subject_id_pad = pp_pad.add_subsections("subject", "id")
+        self._check_unwanted_characters(item.subject.id, subject_id_pad)
 
-            # Disease name in diseases and variant interpretations
-            disease_pad = pp_pad.add_subsection("disease")
-            for i, disease in enumerate(item.diseases):
-                _, _, label_pad = disease_pad.add_subsections(f"#{i}", "term", "label")
-                self._check_unwanted_characters(disease.term.label, label_pad)
+        # Disease name in diseases and variant interpretations
+        disease_pad = pp_pad.add_subsection("disease")
+        for i, disease in enumerate(item.diseases):
+            _, _, label_pad = disease_pad.add_subsections(f"#{i}", "term", "label")
+            self._check_unwanted_characters(disease.term.label, label_pad)
 
-            interpretation_pad = pp_pad.add_subsection("interpretations")
-            for i, interpretation in enumerate(item.interpretations):
-                id_pad = interpretation_pad.add_subsection("id")
-                self._check_unwanted_characters(interpretation.id, id_pad)
-                _, _, label_pad = interpretation_pad.add_subsections("diagnosis", "disease", "label")
-                self._check_unwanted_characters(
-                    interpretation.diagnosis.disease.label, label_pad
-                )
+        interpretation_pad = pp_pad.add_subsection("interpretations")
+        for i, interpretation in enumerate(item.interpretations):
+            id_pad = interpretation_pad.add_subsection("id")
+            self._check_unwanted_characters(interpretation.id, id_pad)
+            _, _, label_pad = interpretation_pad.add_subsections("diagnosis", "disease", "label")
+            self._check_unwanted_characters(interpretation.diagnosis.disease.label, label_pad)
 
-            # PubMed title
-            _, ers_pad = pp_pad.add_subsections("meta_data", "external_references")
-            for i, er in enumerate(item.meta_data.external_references):
-                _, er_pad = ers_pad.add_subsections(f"#{i}", "description")
-                self._check_unwanted_characters(er.description, er_pad)
-
+        # PubMed title
+        _, ers_pad = pp_pad.add_subsections("meta_data", "external_references")
+        for i, er in enumerate(item.meta_data.external_references):
+            _, er_pad = ers_pad.add_subsections(f"#{i}", "description")
+            self._check_unwanted_characters(er.description, er_pad)
 
     def _check_unwanted_characters(
         self,
@@ -134,5 +132,3 @@ class DeprecatedTermIdCheck(PhenopacketAuditor):
             if term is not None and (term.is_obsolete or term.identifier.value != phenotype.type.id):
                 msg = f"`{item.id}` has a deprecated term ID `{phenotype.type.id}`"
                 pp_pad.add_error(msg)
-
-

@@ -1,6 +1,7 @@
-import io
-import logging
 import pathlib
+import sys
+import typing
+
 from .validation import AuditorLevel, get_cohort_auditor, get_phenopacket_auditor
 from .io import read_phenopacket, read_cohort, read_phenopackets
 
@@ -11,36 +12,26 @@ except ImportError:
     print("Click is required for the CLI. Please install it via 'pip install phenosentry[cli]'")
     exit(1)
 
-def setup_logging():
-    level = logging.INFO
-    logger = logging.getLogger()
-    logger.setLevel(level)
-    # create console handler and set level to debug
-    ch = logging.StreamHandler()
-    ch.setLevel(level)
-    # create formatter
-    formatter = logging.Formatter(
-        "%(asctime)s %(name)-20s %(levelname)-3s : %(message)s"
-    )
-    # add formatter to ch
-    ch.setFormatter(formatter)
-    # add ch to logger
-    logger.addHandler(ch)
 
 @click.group()
 def main():
     pass
 
-@main.command('validate')
+
+@main.command("validate")
 @click.option("--path", type=click.Path(exists=True, readable=True), required=True)
 @click.option(
     "--level",
     type=click.Choice([m.value for m in AuditorLevel]),
-    required=True,
-    help="The level of validation to perform: strict or default."
+    default="default",
+    help="The level of validation to perform: strict or default.",
 )
-@click.option('--cohort', is_flag=True, help='Indicates that the input is a cohort.')
-def validate(path, level, is_cohort):
+@click.option("--is-cohort", is_flag=True, help="Indicates that the input is a cohort.")
+def validate(
+    path,
+    level: typing.Literal["default", "strict"],  # type: ignore
+    is_cohort: bool = False,
+):
     """
     Validates phenopacket or cohort data based on the provided options.
 
@@ -52,14 +43,11 @@ def validate(path, level, is_cohort):
     Returns:
         int: 0 if validation passes without errors or warnings, 1 otherwise.
     """
-
-    setup_logging()
-    logger = logging.getLogger(__name__)
     pathed = pathlib.Path(path)
+    level: AuditorLevel = AuditorLevel[level.upper()]
     if pathed.is_file():
         phenopacket = read_phenopacket(
-            path=path,
-            logger=logger,
+            path=pathed,
         )
         # single phenopacket
         auditor = get_phenopacket_auditor(level)
@@ -71,10 +59,7 @@ def validate(path, level, is_cohort):
     elif pathed.is_dir():
         # cohort of phenopackets
         if is_cohort:
-            cohort = read_cohort(
-                directory=path,
-                logger=logger
-            )
+            cohort = read_cohort(directory=pathed)
             auditor = get_cohort_auditor()
             notepad = auditor.prepare_notepad(auditor.id())
             auditor.audit(
@@ -85,7 +70,7 @@ def validate(path, level, is_cohort):
             # We iterate phenopackets and validate them seperately
             auditor = get_phenopacket_auditor(level)
             notepad = auditor.prepare_notepad(auditor.id())
-            phenopackets = read_phenopackets(path, logger=logger)
+            phenopackets = read_phenopackets(pathed)
             for phenopacket in phenopackets:
                 notepad.add_subsection("Phenopacket {}".format(phenopacket.id))
                 auditor.audit(
@@ -94,19 +79,17 @@ def validate(path, level, is_cohort):
                 )
     else:
         # TODO: troubleshoot
-        logger.error("Invalid CLI configuration")
+        print("Invalid CLI configuration", file=sys.stderr)
         return 1
 
-
-    buf = io.StringIO()
     # TODO: Notepad summary should include source data and spot of issue
-    notepad.summarize(file=buf)
     if notepad.has_errors_or_warnings(include_subsections=True):
-        logger.error(buf.getvalue())
+        notepad.summarize(file=sys.stderr)  # type: ignore
         return 1
     else:
-        logger.info(buf.getvalue())
+        notepad.summarize(file=sys.stderr)  # type: ignore
         return 0
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

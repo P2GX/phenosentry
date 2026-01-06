@@ -8,8 +8,7 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
         poetry-version: ["main"]
-        os: [ubuntu-22.04]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -24,4 +23,6 @@ jobs:
       - name: Run tests
         run: poetry run pytest
       - name: Run linter
-        run: poetry run ruff check phenosentry
+        run: poetry run ruff check phenosentry --silent
+      - name: Check code formatting
+        run: poetry run ruff format --check

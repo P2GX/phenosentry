@@ -1,11 +1,17 @@
-import logging, pytest
 from pathlib import Path
+
+import pytest
+
 from phenosentry.io import read_phenopacket
-from phenosentry.validation import PhenopacketAuditor, AuditorLevel, get_phenopacket_auditor
+from phenosentry.validation import (
+    PhenopacketAuditor,
+    AuditorLevel,
+    get_phenopacket_auditor,
+)
 from phenopackets.schema.v2.phenopackets_pb2 import Phenopacket
 
-class TestPhenopacketAuditor:
 
+class TestPhenopacketAuditor:
     @pytest.fixture(scope="class")
     def auditor(self) -> PhenopacketAuditor:
         return get_phenopacket_auditor()
@@ -19,14 +25,14 @@ class TestPhenopacketAuditor:
         self,
         fpath_strict_fail: str,
     ) -> Phenopacket:
-        return read_phenopacket(Path(fpath_strict_fail), logging.getLogger())
+        return read_phenopacket(Path(fpath_strict_fail))
 
     @pytest.fixture(scope="class")
     def phenopacket_default_fail(
         self,
         fpath_default_fail: str,
     ) -> Phenopacket:
-        return read_phenopacket(Path(fpath_default_fail), logging.getLogger())
+        return read_phenopacket(Path(fpath_default_fail))
 
     def test_strict_phenopacket(
         self,
@@ -50,7 +56,7 @@ class TestPhenopacketAuditor:
         self,
         strict_auditor: PhenopacketAuditor,
         auditor: PhenopacketAuditor,
-        phenopacket_default_fail: Phenopacket
+        phenopacket_default_fail: Phenopacket,
     ):
         notepad_strict = PhenopacketAuditor.prepare_notepad("test-ps")
         notepad = PhenopacketAuditor.prepare_notepad("test-ps")
@@ -64,5 +70,3 @@ class TestPhenopacketAuditor:
             notepad=notepad,
         )
         assert notepad.has_errors_or_warnings(include_subsections=True)
-
-

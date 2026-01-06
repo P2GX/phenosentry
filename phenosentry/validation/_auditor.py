@@ -12,16 +12,20 @@ from ._checks import NoUnwantedCharactersCheck, DeprecatedTermIdCheck, UniqueIds
 
 class AuditorLevel(enum.Enum):
     """
-       Enum representing different levels of auditing.
+    Enum representing different levels of auditing.
 
-       Attributes:
-           DEFAULT (str): Represents the default auditing level.
-           STRICT (str): Represents the strict auditing level.
+    Attributes:
+        DEFAULT (str): Represents the default auditing level.
+        STRICT (str): Represents the strict auditing level.
     """
+
     DEFAULT = "default"
     STRICT = "strict"
 
-    def __init__(self, level: str,):
+    def __init__(
+        self,
+        level: str,
+    ):
         self.level = level
 
     def __str__(self):
@@ -33,27 +37,24 @@ class AuditorLevel(enum.Enum):
 
 class DefaultPhenopacketAuditor(PhenopacketAuditor):
     """
-      Default implementation of the `PhenopacketAuditor`.
+    Default implementation of the `PhenopacketAuditor`.
 
-      This auditor applies a series of checks to a `PhenopacketInfo` object and logs the results
-      in a `Notepad`.
-
-      Attributes:
-          _checks (tuple): A tuple of `PhenopacketAuditor` checks to be applied.
-          _id (str): The unique identifier for this auditor.
+    This auditor applies a series of checks to a `PhenopacketInfo` object and logs the results
+    in a `Notepad`.
     """
+
     def __init__(
-            self,
-            checks: typing.Iterable[PhenopacketAuditor],
-            id: str = "DefaultPhenopacketAuditor"
+        self,
+        checks: typing.Iterable[PhenopacketAuditor],
+        id: str = "DefaultPhenopacketAuditor",
     ):
         self._checks = tuple(checks)
         self._id = id
 
     def audit(
-            self,
-            item: Phenopacket,
-            notepad: Notepad,
+        self,
+        item: Phenopacket,
+        notepad: Notepad,
     ):
         for check in self._checks:
             sub_notepad = notepad.add_subsection(check.id())
@@ -65,30 +66,27 @@ class DefaultPhenopacketAuditor(PhenopacketAuditor):
     def id(self) -> str:
         return self._id
 
+
 class DefaultCohortAuditor(CohortAuditor):
     """
-      Default implementation of the `CohortAuditor`.
+    Default implementation of the `CohortAuditor`.
 
-      This auditor applies a series of checks to a `Cohort` and logs the results
-      in a `Notepad`.
-
-      Attributes:
-          _checks (tuple): A tuple of `CohortAuditor` or `PhenopacketAuditor` checks to be applied.
-          _id (str): The unique identifier for this auditor.
+    This auditor applies a series of checks to a `Cohort` and logs the results
+    in a `Notepad`.
     """
 
     def __init__(
-            self,
-            checks: typing.Iterable[CohortAuditor | PhenopacketAuditor],
-            id: str = "DefaultCohortAuditor"
+        self,
+        checks: typing.Iterable[CohortAuditor | PhenopacketAuditor],
+        id: str = "DefaultCohortAuditor",
     ):
         self._checks = tuple(checks)
         self._id = id
 
     def audit(
-            self,
-            item: Cohort,
-            notepad: Notepad,
+        self,
+        item: Cohort,
+        notepad: Notepad,
     ):
         for check in self._checks:
             if isinstance(check, PhenopacketAuditor):
@@ -107,23 +105,27 @@ class DefaultCohortAuditor(CohortAuditor):
     def id(self) -> str:
         return self._id
 
-def get_phenopacket_auditor(level = AuditorLevel.DEFAULT) -> PhenopacketAuditor :
+
+def get_phenopacket_auditor(
+    level: AuditorLevel = AuditorLevel.DEFAULT,
+) -> PhenopacketAuditor:
     """
-     Creates and returns a `PhenopacketAuditor` with default checks.
+    Creates and returns a `PhenopacketAuditor` with default checks.
 
-     Args:
-         level (AuditorLevel): The auditing level. Defaults to `AuditorLevel.DEFAULT`.
+    Args:
+        level (AuditorLevel): The auditing level. Defaults to `AuditorLevel.DEFAULT`.
 
-     Returns:
-         PhenopacketAuditor: An instance of `DefaultPhenopacketAuditor` configured with default checks.
-     """
-    store = hpotk.configure_ontology_store()
-    hpo = store.load_hpo()
+    Returns:
+        PhenopacketAuditor: An instance of `PhenopacketAuditor` configured with default checks.
+    """
     checks = (NoUnwantedCharactersCheck.no_whitespace(),)
     if level == AuditorLevel.STRICT:
+        store = hpotk.configure_ontology_store()
+        hpo = store.load_hpo()
         checks += (DeprecatedTermIdCheck(hpo),)
         return DefaultPhenopacketAuditor(id="StrictPhenopacketAuditor", checks=checks)
     return DefaultPhenopacketAuditor(checks=checks)
+
 
 def get_cohort_auditor() -> CohortAuditor:
     """
