@@ -1,6 +1,8 @@
 import typing
 
-from hpotk import MinimalOntology
+from hpotk import MinimalOntology, TermId
+from hpotk.constants.hpo.base import PHENOTYPIC_ABNORMALITY
+
 from phenopackets.schema.v2.phenopackets_pb2 import Phenopacket
 from stairval.notepad import Notepad
 
@@ -114,3 +116,141 @@ class DeprecatedTermIdAuditor(PhenopacketAuditor):
 
     def __repr__(self) -> str:
         return f'{self.__class__.__module__}.{self.__class__.__qualname__}(hpo="{self._hpo.version}")'
+
+
+class PhenotypicAbnormalityAuditor(PhenopacketAuditor):
+    """
+    Checks that all phenotypic feature ontology classes
+    are descendants of the `Phenotypic abnormality <https://hpo.jax.org/app/browse/term/HP:0000118>`_ [HP:0000118]).
+    """
+
+    def __init__(
+        self,
+        hpo: MinimalOntology,
+    ):
+        self._hpo = hpo
+
+    def id(self) -> str:
+        return "phenotypic_abnormality_descendant_auditor"
+
+    def audit(
+        self,
+        item: Phenopacket,
+        notepad: Notepad,
+    ):
+        pfs_pad = notepad.add_subsection("phenotypic_features")
+        for i, pf in enumerate(item.phenotypic_features):
+            if pf.type.id.startswith("HP:"):
+                if not self._hpo.graph.is_descendant_of_or_equal_to(pf.type.id, PHENOTYPIC_ABNORMALITY):
+                    _, pf_pad = pfs_pad.add_subsections(i, "type")
+                    pf_pad.add_error(
+                        f"{pf.type.label} [{pf.type.id}] is not a descendant of Phenotypic abnormality [HP:0000118]"
+                    )
+
+
+class PresentAnnotationPropagationAuditor(PhenopacketAuditor):
+    """
+    Checks that the phenotypic feature ontology classes
+    does not contain a present term and its present ancestor.
+    """
+
+    def __init__(
+        self,
+        hpo: MinimalOntology,
+    ):
+        self._hpo = hpo
+
+    def id(self) -> str:
+        return "present_annotation_propagation_auditor"
+
+    def audit(
+        self,
+        item: Phenopacket,
+        notepad: Notepad,
+    ):
+        pfs_pad = notepad.add_subsection("phenotypic_features")
+        present2idx = {
+            TermId.from_curie(pf.type.id): i for i, pf in enumerate(item.phenotypic_features) if not pf.excluded
+        }
+        for pf in present2idx:
+            for anc in self._hpo.graph.get_ancestors(pf):
+                if anc in present2idx:
+                    term_label = self._hpo.get_term_name(pf)
+                    anc_label = self._hpo.get_term_name(anc)
+                    pfs_pad.add_error(
+                        f"annotation to {anc_label} [{anc.value}] (#{present2idx[anc]}) is redundant due to annotation to {term_label} [{pf.value}] (#{present2idx[pf]})"
+                    )
+
+
+class ExcludedAnnotationPropagationAuditor(PhenopacketAuditor):
+    """
+    Checks that the phenotypic feature ontology classes
+    does not contain an excluded term and its excluded descendant.
+    """
+
+    def __init__(
+        self,
+        hpo: MinimalOntology,
+    ):
+        self._hpo = hpo
+
+    def id(self) -> str:
+        return "excluded_annotation_propagation_auditor"
+
+    def audit(
+        self,
+        item: Phenopacket,
+        notepad: Notepad,
+    ):
+        excluded2idx = {
+            TermId.from_curie(pf.type.id): i for i, pf in enumerate(item.phenotypic_features) if pf.excluded
+        }
+
+        pfs_pad = notepad.add_subsection("phenotypic_features")
+        for pf in excluded2idx:
+            for anc in self._hpo.graph.get_ancestors(pf):
+                if anc in excluded2idx:
+                    term_label = self._hpo.get_term_name(pf)
+                    anc_label = self._hpo.get_term_name(anc)
+                    pfs_pad.add_error(
+                        f"exclusion of {term_label} [{pf.value}] (#{excluded2idx[pf]}) is redundant due to exclusion of its ancestor {anc_label} [{anc.value}] (#{excluded2idx[anc]})"
+                    )
+
+
+class AnnotationInconsistencyAuditor(PhenopacketAuditor):
+    """
+    Checks that the phenotypic feature ontology classes
+    does not contain a present term and its excluded ancestor.
+    """
+
+    def __init__(
+        self,
+        hpo: MinimalOntology,
+    ):
+        self._hpo = hpo
+
+    def id(self) -> str:
+        return "annotation_inconsistency_auditor"
+
+    def audit(
+        self,
+        item: Phenopacket,
+        notepad: Notepad,
+    ):
+        present2idx = {}
+        excluded2idx = {}
+        for i, pf in enumerate(item.phenotypic_features):
+            if pf.excluded:
+                excluded2idx[TermId.from_curie(pf.type.id)] = i
+            else:
+                present2idx[TermId.from_curie(pf.type.id)] = i
+
+        pfs_pad = notepad.add_subsection("phenotypic_features")
+        for pf in present2idx:
+            for anc in self._hpo.graph.get_ancestors(pf):
+                if anc in excluded2idx:
+                    term_label = self._hpo.get_term_name(pf)
+                    anc_label = self._hpo.get_term_name(anc)
+                    pfs_pad.add_error(
+                        f"presence of {term_label} [{pf.value}] (#{present2idx[pf]}) is logically inconsistent with exclusion of {anc_label} [{anc.value}] (#{excluded2idx[anc]})"
+                    )

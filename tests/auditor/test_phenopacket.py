@@ -10,7 +10,14 @@ from phenopackets.schema.v2 import (
     Phenopacket,
     PhenotypicFeature,
 )
-from phenosentry.auditor.phenopacket import NoUnwantedCharactersAuditor, DeprecatedTermIdAuditor
+from phenosentry.auditor.phenopacket import (
+    AnnotationInconsistencyAuditor,
+    DeprecatedTermIdAuditor,
+    ExcludedAnnotationPropagationAuditor,
+    NoUnwantedCharactersAuditor,
+    PhenotypicAbnormalityAuditor,
+    PresentAnnotationPropagationAuditor,
+)
 
 
 class TestNoUnwantedCharactersAuditor:
@@ -93,3 +100,199 @@ class TestDeprecatedTermIdAuditor:
         auditor: DeprecatedTermIdAuditor,
     ):
         assert repr(auditor) == 'phenosentry.auditor.phenopacket.DeprecatedTermIdAuditor(hpo="2024-04-26")'
+
+
+class TestPhenotypicAbnormalityAuditor:
+    @pytest.fixture(scope="class")
+    def auditor(
+        self,
+        hpo: hpotk.MinimalOntology,
+    ) -> PhenotypicAbnormalityAuditor:
+        return PhenotypicAbnormalityAuditor(hpo)
+
+    def test_audit(
+        self,
+        auditor: PhenotypicAbnormalityAuditor,
+    ):
+        notepad = auditor.prepare_notepad("test")
+
+        item = Phenopacket(
+            phenotypic_features=(
+                PhenotypicFeature(
+                    type=OntologyClass(
+                        id="HP:0034382",
+                        label="Disease remission",
+                    ),
+                ),
+            ),
+        )
+
+        auditor.audit(item=item, notepad=notepad)
+
+        assert notepad.has_errors_or_warnings(include_subsections=True)
+
+        summary = notepad.summary()
+
+        assert "Disease remission [HP:0034382] is not a descendant of Phenotypic abnormality [HP:0000118]" in summary
+
+
+class TestAnnotationPropagationValidator:
+    @pytest.fixture(scope="class")
+    def auditor(
+        self,
+        hpo: hpotk.MinimalOntology,
+    ) -> PresentAnnotationPropagationAuditor:
+        return PresentAnnotationPropagationAuditor(hpo)
+
+    def test_audit(
+        self,
+        auditor: PresentAnnotationPropagationAuditor,
+    ):
+        notepad = auditor.prepare_notepad("test")
+
+        item = Phenopacket(
+            phenotypic_features=(
+                PhenotypicFeature(
+                    type=OntologyClass(
+                        id="HP:0001166",
+                        label="Arachnodactyly",
+                    ),
+                ),
+                PhenotypicFeature(
+                    type=OntologyClass(
+                        id="HP:0001167",
+                        label="Abnormal finger morphology",
+                    ),
+                ),
+                PhenotypicFeature(
+                    type=OntologyClass(
+                        id="HP:0100746",
+                        label="Macrodactyly of finger",
+                    ),
+                ),
+            ),
+        )
+
+        auditor.audit(item=item, notepad=notepad)
+
+        assert notepad.has_errors_or_warnings(include_subsections=True)
+
+        summary = notepad.summary()
+
+        assert (
+            "annotation to Abnormal finger morphology [HP:0001167] (#1) is redundant due to annotation to Arachnodactyly [HP:0001166] (#0)"
+            in summary
+        )
+        assert (
+            "annotation to Abnormal finger morphology [HP:0001167] (#1) is redundant due to annotation to Macrodactyly of finger [HP:0100746] (#2)"
+            in summary
+        )
+
+
+class TestExcludedAnnotationPropagationAuditor:
+    @pytest.fixture(scope="class")
+    def auditor(
+        self,
+        hpo: hpotk.MinimalOntology,
+    ) -> ExcludedAnnotationPropagationAuditor:
+        return ExcludedAnnotationPropagationAuditor(hpo)
+
+    def test_audit(
+        self,
+        auditor: ExcludedAnnotationPropagationAuditor,
+    ):
+        notepad = auditor.prepare_notepad("test")
+
+        item = Phenopacket(
+            phenotypic_features=(
+                PhenotypicFeature(
+                    type=OntologyClass(
+                        id="HP:0001166",
+                        label="Arachnodactyly",
+                    ),
+                    excluded=True,
+                ),
+                PhenotypicFeature(
+                    type=OntologyClass(
+                        id="HP:0001167",
+                        label="Abnormal finger morphology",
+                    ),
+                    excluded=True,
+                ),
+                PhenotypicFeature(
+                    type=OntologyClass(
+                        id="HP:0100746",
+                        label="Macrodactyly of finger",
+                    ),
+                    excluded=True,
+                ),
+            ),
+        )
+
+        auditor.audit(item=item, notepad=notepad)
+
+        assert notepad.has_errors_or_warnings(include_subsections=True)
+
+        summary = notepad.summary()
+
+        assert (
+            "exclusion of Arachnodactyly [HP:0001166] (#0) is redundant due to exclusion of its ancestor Abnormal finger morphology [HP:0001167] (#1)"
+            in summary
+        )
+        assert (
+            "exclusion of Macrodactyly of finger [HP:0100746] (#2) is redundant due to exclusion of its ancestor Abnormal finger morphology [HP:0001167] (#1)"
+            in summary
+        )
+
+class TestAnnotationInconsistencyAuditor:
+    @pytest.fixture(scope="class")
+    def auditor(
+        self,
+        hpo: hpotk.MinimalOntology,
+    ) -> AnnotationInconsistencyAuditor:
+        return AnnotationInconsistencyAuditor(hpo)
+
+    def test_audit(
+        self,
+        auditor: AnnotationInconsistencyAuditor,
+    ):
+        notepad = auditor.prepare_notepad("test")
+
+        item = Phenopacket(
+            phenotypic_features=(
+                PhenotypicFeature(
+                    type=OntologyClass(
+                        id="HP:0001166",
+                        label="Arachnodactyly",
+                    ),
+                ),
+                PhenotypicFeature(
+                    type=OntologyClass(
+                        id="HP:0001167",
+                        label="Abnormal finger morphology",
+                    ),
+                    excluded=True,
+                ),
+                PhenotypicFeature(
+                    type=OntologyClass(
+                        id="HP:0100746",
+                        label="Macrodactyly of finger",
+                    ),
+                ),
+            ),
+        )
+
+        auditor.audit(item=item, notepad=notepad)
+
+        assert notepad.has_errors_or_warnings(include_subsections=True)
+
+        summary = notepad.summary()
+
+        assert (
+            "presence of Arachnodactyly [HP:0001166] (#0) is logically inconsistent with exclusion of Abnormal finger morphology [HP:0001167] (#1)"
+            in summary
+        )
+        assert (
+            "presence of Macrodactyly of finger [HP:0100746] (#2) is logically inconsistent with exclusion of Abnormal finger morphology [HP:0001167] (#1)"
+            in summary
+        )
