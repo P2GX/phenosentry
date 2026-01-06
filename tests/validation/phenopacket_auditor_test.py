@@ -3,8 +3,8 @@ from pathlib import Path
 import pytest
 
 from phenosentry.io import read_phenopacket
+from phenosentry.auditor import PhenopacketAuditor
 from phenosentry.validation import (
-    PhenopacketAuditor,
     AuditorLevel,
     get_phenopacket_auditor,
 )

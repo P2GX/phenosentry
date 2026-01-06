@@ -6,8 +6,9 @@ from phenopackets.schema.v2.phenopackets_pb2 import Phenopacket
 from phenopackets.schema.v2.phenopackets_pb2 import Cohort
 from stairval.notepad import Notepad
 
-from ._api import PhenopacketAuditor, CohortAuditor
-from ._checks import NoUnwantedCharactersCheck, DeprecatedTermIdCheck, UniqueIdsCheck
+from phenosentry.auditor import PhenopacketAuditor, CohortAuditor
+from phenosentry.auditor.cohort import UniqueIdsAuditor
+from phenosentry.auditor.phenopacket import NoUnwantedCharactersAuditor, DeprecatedTermIdAuditor
 
 
 class AuditorLevel(enum.Enum):
@@ -118,11 +119,11 @@ def get_phenopacket_auditor(
     Returns:
         PhenopacketAuditor: An instance of `PhenopacketAuditor` configured with default checks.
     """
-    checks = (NoUnwantedCharactersCheck.no_whitespace(),)
+    checks = (NoUnwantedCharactersAuditor.no_whitespace(),)
     if level == AuditorLevel.STRICT:
         store = hpotk.configure_ontology_store()
         hpo = store.load_hpo()
-        checks += (DeprecatedTermIdCheck(hpo),)
+        checks += (DeprecatedTermIdAuditor(hpo),)
         return DefaultPhenopacketAuditor(id="StrictPhenopacketAuditor", checks=checks)
     return DefaultPhenopacketAuditor(checks=checks)
 
@@ -134,5 +135,5 @@ def get_cohort_auditor() -> CohortAuditor:
     Returns:
         CohortAuditor: An instance of `DefaultCohortAuditor` configured with default checks.
     """
-    checks = (get_phenopacket_auditor(), UniqueIdsCheck())
+    checks = (get_phenopacket_auditor(), UniqueIdsAuditor())
     return DefaultCohortAuditor(checks=checks)

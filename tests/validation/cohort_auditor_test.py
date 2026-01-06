@@ -3,7 +3,8 @@ from pathlib import Path
 import pytest
 
 from phenosentry.io import read_cohort
-from phenosentry.validation import CohortAuditor, get_cohort_auditor
+from phenosentry.auditor import CohortAuditor
+from phenosentry.validation import get_cohort_auditor
 from phenopackets.schema.v2.phenopackets_pb2 import Cohort
 
 
