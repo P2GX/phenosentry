@@ -118,10 +118,10 @@ def get_phenopacket_auditor(
     Returns:
         PhenopacketAuditor: An instance of `PhenopacketAuditor` configured with default checks.
     """
-    store = hpotk.configure_ontology_store()
-    hpo = store.load_hpo()
     checks = (NoUnwantedCharactersCheck.no_whitespace(),)
     if level == AuditorLevel.STRICT:
+        store = hpotk.configure_ontology_store()
+        hpo = store.load_hpo()
         checks += (DeprecatedTermIdCheck(hpo),)
         return DefaultPhenopacketAuditor(id="StrictPhenopacketAuditor", checks=checks)
     return DefaultPhenopacketAuditor(checks=checks)
