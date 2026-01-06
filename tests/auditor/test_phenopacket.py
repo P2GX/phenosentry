@@ -244,6 +244,7 @@ class TestExcludedAnnotationPropagationAuditor:
             in summary
         )
 
+
 class TestAnnotationInconsistencyAuditor:
     @pytest.fixture(scope="class")
     def auditor(
