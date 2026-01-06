@@ -4,30 +4,30 @@ from phenosentry.io import read_cohort
 from phenosentry.validation import CohortAuditor, get_cohort_auditor
 from phenopackets.schema.v2.phenopackets_pb2 import Cohort
 
-class TestCohortAuditor:
 
+class TestCohortAuditor:
     @pytest.fixture(scope="class")
     def auditor(self) -> CohortAuditor:
         return get_cohort_auditor()
 
     @pytest.fixture(scope="class")
     def cohort_pass(
-            self,
-            fpath_healthy_cohort: str,
+        self,
+        fpath_healthy_cohort: str,
     ) -> Cohort:
         return read_cohort(Path(fpath_healthy_cohort), logging.getLogger())
 
     @pytest.fixture(scope="class")
     def cohort_fail(
-            self,
-            fpath_dirty_cohort: str,
+        self,
+        fpath_dirty_cohort: str,
     ) -> Cohort:
         return read_cohort(Path(fpath_dirty_cohort), logging.getLogger())
 
     def test_cohort_pass(
-            self,
-            auditor: CohortAuditor,
-            cohort_pass: Cohort,
+        self,
+        auditor: CohortAuditor,
+        cohort_pass: Cohort,
     ):
         notepad = auditor.prepare_notepad("test-ps")
         auditor.audit(
@@ -43,5 +43,3 @@ class TestCohortAuditor:
             notepad=notepad,
         )
         assert notepad.has_errors_or_warnings(include_subsections=False)
-
-
