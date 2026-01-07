@@ -4,7 +4,12 @@ from pathlib import Path
 import hpotk
 
 from phenosentry.io import read_phenopacket
-from phenosentry.auditor.phenopacket import PhenopacketMetaAuditor, NoUnwantedCharactersAuditor, DeprecatedTermIdAuditor, PhenotypicAbnormalityAuditor
+from phenosentry.auditor.phenopacket import (
+    PhenopacketMetaAuditor,
+    NoUnwantedCharactersAuditor,
+    DeprecatedTermIdAuditor,
+    PhenotypicAbnormalityAuditor,
+)
 
 # Read a phenopacket.
 path = "data/example-phenopacket.json"
