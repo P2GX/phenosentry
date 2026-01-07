@@ -9,6 +9,36 @@ from stairval.notepad import Notepad
 from ._api import PhenopacketAuditor
 
 
+class PhenopacketMetaAuditor(PhenopacketAuditor):
+    """
+    `PhenopacketMetaAuditor` applies several phenopacket auditors in a sequence.
+    """
+
+    # TODO: this could arguably be generified even further, to support auditing any `T`,
+    # given a sequence of `Auditor[T]`...
+
+    def __init__(
+        self,
+        auditors: typing.Iterable[PhenopacketAuditor],
+    ):
+        self._auditors = tuple(auditors)
+        self._id = "[" + ",".join(check.id() for check in self._auditors) + "]"
+
+    def id(self) -> str:
+        return self._id
+
+    def audit(
+        self,
+        item: Phenopacket,
+        notepad: Notepad,
+    ):
+        for auditor in self._auditors:
+            auditor.audit(
+                item=item,
+                notepad=notepad,
+            )
+
+
 class NoUnwantedCharactersAuditor(PhenopacketAuditor):
     """
     A check to ensure that phenopacket identifiers do not include unwanted characters (e.g., whitespace).

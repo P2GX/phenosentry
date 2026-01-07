@@ -1,9 +1,48 @@
+import typing
+
 from collections import Counter, defaultdict
 
 from phenopackets.schema.v2.phenopackets_pb2 import Cohort
 from stairval.notepad import Notepad
 
-from ._api import CohortAuditor
+from ._api import CohortAuditor, PhenopacketAuditor
+
+
+class CohortMetaAuditor(CohortAuditor):
+    """
+    Cohort meta auditor audits a cohort with a sequence of cohort auditors.
+    Each cohort member (a :class:`Phenopacket`) is then audited with a sequence of phenopacket auditors.
+    """
+
+    def __init__(
+        self,
+        auditors: typing.Iterable[CohortAuditor],
+        phenopacket_auditors: typing.Optional[typing.Iterable[PhenopacketAuditor]] = (),
+    ):
+        self._auditors = tuple(auditors)
+        if phenopacket_auditors:
+            self._pp_auditors = tuple(phenopacket_auditors)
+        else:
+            self._pp_auditors = ()
+        self._id = f"[{','.join(a.id() for a in self._auditors + self._pp_auditors)}]"
+
+    def id(self) -> str:
+        return self._id
+
+    def audit(
+        self,
+        item: Cohort,
+        notepad: Notepad,
+    ):
+        for auditor in self._auditors:
+            auditor.audit(item, notepad)
+
+        if self._pp_auditors:
+            members_pad = notepad.add_subsection("members")
+            for i, member in enumerate(item.members):
+                member_pad = members_pad.add_subsection(i)
+                for auditor in self._pp_auditors:
+                    auditor.audit(member, member_pad)
 
 
 class UniqueIdsAuditor(CohortAuditor):
