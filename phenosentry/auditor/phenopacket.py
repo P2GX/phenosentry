@@ -205,7 +205,9 @@ class PhenotypicAbnormalityAuditor(PhenopacketAuditor):
     ):
         pfs_pad = notepad.add_subsection("phenotypic_features")
         for i, pf in enumerate(item.phenotypic_features):
-            if pf.type.id.startswith("HP:") and not _term_is_absent_or_non_primary(self._hpo, TermId.from_curie(pf.type.id)):
+            if pf.type.id.startswith("HP:") and not _term_is_absent_or_non_primary(
+                self._hpo, TermId.from_curie(pf.type.id)
+            ):
                 if not self._hpo.graph.is_ancestor_of_or_equal_to(PHENOTYPIC_ABNORMALITY, pf.type.id):
                     _, pf_pad = pfs_pad.add_subsections(i, "type")
                     pf_pad.add_error(
@@ -322,6 +324,7 @@ class AnnotationInconsistencyAuditor(PhenopacketAuditor):
                         pfs_pad.add_error(
                             f"presence of {term_label} [{pf.value}] (#{present2idx[pf]}) is logically inconsistent with exclusion of {anc_label} [{anc.value}] (#{excluded2idx[anc]})"
                         )
+
 
 def _term_is_absent_or_non_primary(hpo: MinimalOntology, term_id: TermId) -> bool:
     # HPO toolkit does not provide an easy way for checking if a term id is obsolete.
