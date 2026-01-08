@@ -115,9 +115,42 @@ class NoUnwantedCharactersAuditor(PhenopacketAuditor):
         return f"{self.__class__.__module__}.{self.__class__.__qualname__}(unwanted={sorted(self._unwanted)})"
 
 
+class HpoTermIsDefinedAuditor(PhenopacketAuditor):
+    """
+    Checks if all phenotypic feature ontology classes are valid
+    with respect to the used HPO.
+
+    The check fails if a HPO curie is not current or obsolete
+    (i.e. the CURIE has never been used before).
+    """
+
+    def __init__(
+        self,
+        hpo: MinimalOntology,
+    ):
+        self._hpo = hpo
+
+    def id(self) -> str:
+        return "hpo_term_is_defined"
+
+    def audit(
+        self,
+        item: Phenopacket,
+        notepad: Notepad,
+    ):
+        pfs_pad = notepad.add_subsection("phenotypic_features")
+        for i, pf in enumerate(item.phenotypic_features):
+            if pf.type.id.startswith("HP:"):
+                if pf.type.id not in self._hpo:
+                    _, pf_pad = pfs_pad.add_subsections(i, "type")
+                    pf_pad.add_error(
+                        f"{pf.type.label} [{pf.type.id}] is not present in HPO as of version {self._hpo.version}"
+                    )
+
+
 class DeprecatedTermIdAuditor(PhenopacketAuditor):
     """
-    Checks that no HPO term id is deprecated.
+    Checks that no HPO term id is deprecated (not current).
     """
 
     def __init__(
@@ -135,11 +168,13 @@ class DeprecatedTermIdAuditor(PhenopacketAuditor):
         notepad: Notepad,
     ):
         pf_pad = notepad.add_subsection("phenotypic_features")
-        for i, phenotype in enumerate(item.phenotypic_features):
-            term = self._hpo.get_term(phenotype.type.id)
-            if term is not None and (term.is_obsolete or term.identifier.value != phenotype.type.id):
-                _, _, id_pad = pf_pad.add_subsections(i, "type", "id")
-                id_pad.add_error(f"`{phenotype.type.id}` has been deprecated")
+        for i, pf in enumerate(item.phenotypic_features):
+            if pf.type.id in self._hpo:  # not absent
+                term = self._hpo.get_term(pf.type.id)
+                assert term is not None, "We checked term's presence in the ontology"
+                if term.is_obsolete or term.identifier.value != pf.type.id:
+                    _, _, id_pad = pf_pad.add_subsections(i, "type", "id")
+                    id_pad.add_error(f"`{pf.type.id}` has been deprecated")
 
     def __str__(self) -> str:
         return repr(self)
@@ -170,8 +205,10 @@ class PhenotypicAbnormalityAuditor(PhenopacketAuditor):
     ):
         pfs_pad = notepad.add_subsection("phenotypic_features")
         for i, pf in enumerate(item.phenotypic_features):
-            if pf.type.id.startswith("HP:"):
-                if not self._hpo.graph.is_descendant_of_or_equal_to(pf.type.id, PHENOTYPIC_ABNORMALITY):
+            if pf.type.id.startswith("HP:") and not _term_is_absent_or_non_primary(
+                self._hpo, TermId.from_curie(pf.type.id)
+            ):
+                if not self._hpo.graph.is_ancestor_of_or_equal_to(PHENOTYPIC_ABNORMALITY, pf.type.id):
                     _, pf_pad = pfs_pad.add_subsections(i, "type")
                     pf_pad.add_error(
                         f"{pf.type.label} [{pf.type.id}] is not a descendant of Phenotypic abnormality [HP:0000118]"
@@ -203,13 +240,14 @@ class PresentAnnotationPropagationAuditor(PhenopacketAuditor):
             TermId.from_curie(pf.type.id): i for i, pf in enumerate(item.phenotypic_features) if not pf.excluded
         }
         for pf in present2idx:
-            for anc in self._hpo.graph.get_ancestors(pf):
-                if anc in present2idx:
-                    term_label = self._hpo.get_term_name(pf)
-                    anc_label = self._hpo.get_term_name(anc)
-                    pfs_pad.add_error(
-                        f"annotation to {anc_label} [{anc.value}] (#{present2idx[anc]}) is redundant due to annotation to {term_label} [{pf.value}] (#{present2idx[pf]})"
-                    )
+            if not _term_is_absent_or_non_primary(self._hpo, pf):
+                for anc in self._hpo.graph.get_ancestors(pf):
+                    if anc in present2idx:
+                        term_label = self._hpo.get_term_name(pf)
+                        anc_label = self._hpo.get_term_name(anc)
+                        pfs_pad.add_error(
+                            f"annotation to {anc_label} [{anc.value}] (#{present2idx[anc]}) is redundant due to annotation to {term_label} [{pf.value}] (#{present2idx[pf]})"
+                        )
 
 
 class ExcludedAnnotationPropagationAuditor(PhenopacketAuditor):
@@ -238,13 +276,14 @@ class ExcludedAnnotationPropagationAuditor(PhenopacketAuditor):
 
         pfs_pad = notepad.add_subsection("phenotypic_features")
         for pf in excluded2idx:
-            for anc in self._hpo.graph.get_ancestors(pf):
-                if anc in excluded2idx:
-                    term_label = self._hpo.get_term_name(pf)
-                    anc_label = self._hpo.get_term_name(anc)
-                    pfs_pad.add_error(
-                        f"exclusion of {term_label} [{pf.value}] (#{excluded2idx[pf]}) is redundant due to exclusion of its ancestor {anc_label} [{anc.value}] (#{excluded2idx[anc]})"
-                    )
+            if not _term_is_absent_or_non_primary(self._hpo, pf):
+                for anc in self._hpo.graph.get_ancestors(pf):
+                    if anc in excluded2idx:
+                        term_label = self._hpo.get_term_name(pf)
+                        anc_label = self._hpo.get_term_name(anc)
+                        pfs_pad.add_error(
+                            f"exclusion of {term_label} [{pf.value}] (#{excluded2idx[pf]}) is redundant due to exclusion of its ancestor {anc_label} [{anc.value}] (#{excluded2idx[anc]})"
+                        )
 
 
 class AnnotationInconsistencyAuditor(PhenopacketAuditor):
@@ -277,10 +316,18 @@ class AnnotationInconsistencyAuditor(PhenopacketAuditor):
 
         pfs_pad = notepad.add_subsection("phenotypic_features")
         for pf in present2idx:
-            for anc in self._hpo.graph.get_ancestors(pf):
-                if anc in excluded2idx:
-                    term_label = self._hpo.get_term_name(pf)
-                    anc_label = self._hpo.get_term_name(anc)
-                    pfs_pad.add_error(
-                        f"presence of {term_label} [{pf.value}] (#{present2idx[pf]}) is logically inconsistent with exclusion of {anc_label} [{anc.value}] (#{excluded2idx[anc]})"
-                    )
+            if not _term_is_absent_or_non_primary(self._hpo, pf):
+                for anc in self._hpo.graph.get_ancestors(pf):
+                    if anc in excluded2idx:
+                        term_label = self._hpo.get_term_name(pf)
+                        anc_label = self._hpo.get_term_name(anc)
+                        pfs_pad.add_error(
+                            f"presence of {term_label} [{pf.value}] (#{present2idx[pf]}) is logically inconsistent with exclusion of {anc_label} [{anc.value}] (#{excluded2idx[anc]})"
+                        )
+
+
+def _term_is_absent_or_non_primary(hpo: MinimalOntology, term_id: TermId) -> bool:
+    # HPO toolkit does not provide an easy way for checking if a term id is obsolete.
+    # This is a workaround.
+    term = hpo.get_term(term_id)
+    return term is None or term.identifier != term_id
