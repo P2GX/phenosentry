@@ -148,6 +148,38 @@ class DeprecatedTermIdAuditor(PhenopacketAuditor):
         return f'{self.__class__.__module__}.{self.__class__.__qualname__}(hpo="{self._hpo.version}")'
 
 
+class HpoTermIsPresentAuditor(PhenopacketAuditor):
+    """
+    Checks if all phenotypic feature ontology classes are valid
+    with respect to the used HPO.
+
+    The check fails if a HPO curie is not current or obsolete
+    (i.e. the CURIE has never been used before).
+    """
+
+    def __init__(
+        self,
+        hpo: MinimalOntology,
+    ):
+        self._hpo = hpo
+
+    def id(self) -> str:
+        return "hpo_term_is_present"
+
+    def audit(
+        self,
+        item: Phenopacket,
+        notepad: Notepad,
+    ):
+        pfs_pad = notepad.add_subsection("phenotypic_features")
+        for i, pf in enumerate(item.phenotypic_features):
+            if pf.type.id.startswith("HP:"):
+                if pf.type.id not in self._hpo:
+                    _, pf_pad = pfs_pad.add_subsections(i, "type")
+                    pf_pad.add_error(
+                        f"{pf.type.label} [{pf.type.id}] is not present in HPO as of version {self._hpo.version}"
+                    )
+
 class PhenotypicAbnormalityAuditor(PhenopacketAuditor):
     """
     Checks that all phenotypic feature ontology classes
