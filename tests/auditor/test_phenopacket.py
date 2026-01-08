@@ -12,7 +12,7 @@ from phenopackets.schema.v2 import (
 )
 from phenosentry.auditor.phenopacket import (
     AnnotationInconsistencyAuditor,
-    HpoTermIsPresentAuditor,
+    HpoTermIsDefinedAuditor,
     DeprecatedTermIdAuditor,
     ExcludedAnnotationPropagationAuditor,
     NoUnwantedCharactersAuditor,
@@ -305,12 +305,12 @@ class TestHpoTermIsPresentAuditor:
     def auditor(
         self,
         hpo: hpotk.MinimalOntology,
-    ) -> HpoTermIsPresentAuditor:
-        return HpoTermIsPresentAuditor(hpo)
+    ) -> HpoTermIsDefinedAuditor:
+        return HpoTermIsDefinedAuditor(hpo)
 
     def test_audit_non_existing_term(
         self,
-        auditor: HpoTermIsPresentAuditor,
+        auditor: HpoTermIsDefinedAuditor,
     ):
         notepad = auditor.prepare_notepad("test")
 
@@ -336,7 +336,7 @@ class TestHpoTermIsPresentAuditor:
 
     def test_audit_current_or_obsolete_term(
         self,
-        auditor: HpoTermIsPresentAuditor,
+        auditor: HpoTermIsDefinedAuditor,
     ):
         notepad = auditor.prepare_notepad("test")
 
