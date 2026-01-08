@@ -136,10 +136,12 @@ class DeprecatedTermIdAuditor(PhenopacketAuditor):
     ):
         pf_pad = notepad.add_subsection("phenotypic_features")
         for i, phenotype in enumerate(item.phenotypic_features):
-            term = self._hpo.get_term(phenotype.type.id)
-            if term is not None and (term.is_obsolete or term.identifier.value != phenotype.type.id):
-                _, _, id_pad = pf_pad.add_subsections(i, "type", "id")
-                id_pad.add_error(f"`{phenotype.type.id}` has been deprecated")
+            if phenotype.type.id in self._hpo:
+                term = self._hpo.get_term(phenotype.type.id)
+                assert term is not None, "We checked term's presence in the ontology"
+                if term.is_obsolete or term.identifier.value != phenotype.type.id:
+                    _, _, id_pad = pf_pad.add_subsections(i, "type", "id")
+                    id_pad.add_error(f"`{phenotype.type.id}` has been deprecated")
 
     def __str__(self) -> str:
         return repr(self)
@@ -202,7 +204,7 @@ class PhenotypicAbnormalityAuditor(PhenopacketAuditor):
     ):
         pfs_pad = notepad.add_subsection("phenotypic_features")
         for i, pf in enumerate(item.phenotypic_features):
-            if pf.type.id.startswith("HP:"):
+            if pf.type.id.startswith("HP:") and pf.type.id in self._hpo:
                 if not self._hpo.graph.is_ancestor_of_or_equal_to(PHENOTYPIC_ABNORMALITY, pf.type.id):
                     _, pf_pad = pfs_pad.add_subsections(i, "type")
                     pf_pad.add_error(
@@ -235,13 +237,14 @@ class PresentAnnotationPropagationAuditor(PhenopacketAuditor):
             TermId.from_curie(pf.type.id): i for i, pf in enumerate(item.phenotypic_features) if not pf.excluded
         }
         for pf in present2idx:
-            for anc in self._hpo.graph.get_ancestors(pf):
-                if anc in present2idx:
-                    term_label = self._hpo.get_term_name(pf)
-                    anc_label = self._hpo.get_term_name(anc)
-                    pfs_pad.add_error(
-                        f"annotation to {anc_label} [{anc.value}] (#{present2idx[anc]}) is redundant due to annotation to {term_label} [{pf.value}] (#{present2idx[pf]})"
-                    )
+            if pf in self._hpo:
+                for anc in self._hpo.graph.get_ancestors(pf):
+                    if anc in present2idx:
+                        term_label = self._hpo.get_term_name(pf)
+                        anc_label = self._hpo.get_term_name(anc)
+                        pfs_pad.add_error(
+                            f"annotation to {anc_label} [{anc.value}] (#{present2idx[anc]}) is redundant due to annotation to {term_label} [{pf.value}] (#{present2idx[pf]})"
+                        )
 
 
 class ExcludedAnnotationPropagationAuditor(PhenopacketAuditor):
@@ -270,13 +273,14 @@ class ExcludedAnnotationPropagationAuditor(PhenopacketAuditor):
 
         pfs_pad = notepad.add_subsection("phenotypic_features")
         for pf in excluded2idx:
-            for anc in self._hpo.graph.get_ancestors(pf):
-                if anc in excluded2idx:
-                    term_label = self._hpo.get_term_name(pf)
-                    anc_label = self._hpo.get_term_name(anc)
-                    pfs_pad.add_error(
-                        f"exclusion of {term_label} [{pf.value}] (#{excluded2idx[pf]}) is redundant due to exclusion of its ancestor {anc_label} [{anc.value}] (#{excluded2idx[anc]})"
-                    )
+            if pf in self._hpo:
+                for anc in self._hpo.graph.get_ancestors(pf):
+                    if anc in excluded2idx:
+                        term_label = self._hpo.get_term_name(pf)
+                        anc_label = self._hpo.get_term_name(anc)
+                        pfs_pad.add_error(
+                            f"exclusion of {term_label} [{pf.value}] (#{excluded2idx[pf]}) is redundant due to exclusion of its ancestor {anc_label} [{anc.value}] (#{excluded2idx[anc]})"
+                        )
 
 
 class AnnotationInconsistencyAuditor(PhenopacketAuditor):
@@ -309,10 +313,11 @@ class AnnotationInconsistencyAuditor(PhenopacketAuditor):
 
         pfs_pad = notepad.add_subsection("phenotypic_features")
         for pf in present2idx:
-            for anc in self._hpo.graph.get_ancestors(pf):
-                if anc in excluded2idx:
-                    term_label = self._hpo.get_term_name(pf)
-                    anc_label = self._hpo.get_term_name(anc)
-                    pfs_pad.add_error(
-                        f"presence of {term_label} [{pf.value}] (#{present2idx[pf]}) is logically inconsistent with exclusion of {anc_label} [{anc.value}] (#{excluded2idx[anc]})"
-                    )
+            if pf in self._hpo:
+                for anc in self._hpo.graph.get_ancestors(pf):
+                    if anc in excluded2idx:
+                        term_label = self._hpo.get_term_name(pf)
+                        anc_label = self._hpo.get_term_name(anc)
+                        pfs_pad.add_error(
+                            f"presence of {term_label} [{pf.value}] (#{present2idx[pf]}) is logically inconsistent with exclusion of {anc_label} [{anc.value}] (#{excluded2idx[anc]})"
+                        )
