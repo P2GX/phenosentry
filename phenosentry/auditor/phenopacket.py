@@ -182,6 +182,7 @@ class HpoTermIsPresentAuditor(PhenopacketAuditor):
                         f"{pf.type.label} [{pf.type.id}] is not present in HPO as of version {self._hpo.version}"
                     )
 
+
 class PhenotypicAbnormalityAuditor(PhenopacketAuditor):
     """
     Checks that all phenotypic feature ontology classes

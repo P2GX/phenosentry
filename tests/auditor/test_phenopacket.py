@@ -333,7 +333,7 @@ class TestHpoTermIsPresentAuditor:
         summary = notepad.summary()
 
         assert "Made-up term [HP:9999999999] is not present in HPO as of version 2024-04-26" in summary
-    
+
     def test_audit_current_or_obsolete_term(
         self,
         auditor: HpoTermIsPresentAuditor,
@@ -362,4 +362,3 @@ class TestHpoTermIsPresentAuditor:
         auditor.audit(item=item, notepad=notepad)
 
         assert not notepad.has_errors_or_warnings(include_subsections=True)
-        
