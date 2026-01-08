@@ -1,4 +1,3 @@
-from . import validation
-__all__ = [
-    "validation"
-]
+"""
+Phenosentry is a library for Q/C and validation of phenopackets in Python.
+"""

@@ -1,15 +1,30 @@
 import os
-import pytest
-from pathlib import Path
 import typing
+
+from pathlib import Path
+
+import hpotk
+import pytest
 
 from google.protobuf.message import Message
 from google.protobuf.json_format import Parse
+
 
 @pytest.fixture(scope="session")
 def fpath_test_data() -> str:
     fpath_test_dir = os.path.join(os.getcwd(), "tests")
     return os.path.join(fpath_test_dir, "test_data")
+
+
+@pytest.fixture(scope="session")
+def fpath_hpo(fpath_test_data: str) -> str:
+    return os.path.join(fpath_test_data, "hp.v2024-04-26.json.gz")
+
+
+@pytest.fixture(scope="session")
+def hpo(fpath_hpo: str) -> hpotk.MinimalOntology:
+    return hpotk.load_minimal_ontology(fpath_hpo)
+
 
 @pytest.fixture(scope="session")
 def fpath_ps_folder(
@@ -17,17 +32,20 @@ def fpath_ps_folder(
 ) -> str:
     return os.path.join(fpath_test_data, "phenopackets")
 
+
 @pytest.fixture(scope="session")
 def fpath_ps_folder_zip(
     fpath_test_data: str,
 ) -> str:
     return os.path.join(fpath_test_data, "phenopackets.zip")
 
+
 @pytest.fixture(scope="session")
 def fpath_healthy_phenopacket(
     fpath_ps_folder: str,
 ) -> str:
     return os.path.join(fpath_ps_folder, "PMID_28239884_Family1proband.json")
+
 
 @pytest.fixture(scope="session")
 def fpath_healthy_phenopacket_zip(
@@ -42,17 +60,20 @@ def fpath_strict_fail(
 ) -> Path:
     return Path(os.path.join(fpath_test_data, "strict-fail-phenopacket.json"))
 
+
 @pytest.fixture(scope="session")
 def fpath_default_fail(
     fpath_test_data: str,
 ) -> Path:
     return Path(os.path.join(fpath_test_data, "default-fail-phenopacket.json"))
 
+
 @pytest.fixture(scope="session")
 def fpath_healthy_cohort(
     fpath_test_data: str,
 ) -> str:
     return os.path.join(fpath_test_data, "cohort_pass")
+
 
 @pytest.fixture(scope="session")
 def fpath_dirty_cohort(
