@@ -12,6 +12,7 @@ from phenopackets.schema.v2 import (
 )
 from phenosentry.auditor.phenopacket import (
     AnnotationInconsistencyAuditor,
+    HpoTermIsDefinedAuditor,
     DeprecatedTermIdAuditor,
     ExcludedAnnotationPropagationAuditor,
     NoUnwantedCharactersAuditor,
@@ -297,3 +298,67 @@ class TestAnnotationInconsistencyAuditor:
             "presence of Macrodactyly of finger [HP:0100746] (#2) is logically inconsistent with exclusion of Abnormal finger morphology [HP:0001167] (#1)"
             in summary
         )
+
+
+class TestHpoTermIsPresentAuditor:
+    @pytest.fixture(scope="class")
+    def auditor(
+        self,
+        hpo: hpotk.MinimalOntology,
+    ) -> HpoTermIsDefinedAuditor:
+        return HpoTermIsDefinedAuditor(hpo)
+
+    def test_audit_non_existing_term(
+        self,
+        auditor: HpoTermIsDefinedAuditor,
+    ):
+        notepad = auditor.prepare_notepad("test")
+
+        item = Phenopacket(
+            phenotypic_features=(
+                PhenotypicFeature(
+                    type=OntologyClass(
+                        # Made-up term that should never exist
+                        id="HP:9999999999",
+                        label="Made-up term",
+                    ),
+                ),
+            ),
+        )
+
+        auditor.audit(item=item, notepad=notepad)
+
+        assert notepad.has_errors_or_warnings(include_subsections=True)
+
+        summary = notepad.summary()
+
+        assert "Made-up term [HP:9999999999] is not present in HPO as of version 2024-04-26" in summary
+
+    def test_audit_current_or_obsolete_term(
+        self,
+        auditor: HpoTermIsDefinedAuditor,
+    ):
+        notepad = auditor.prepare_notepad("test")
+
+        item = Phenopacket(
+            phenotypic_features=(
+                PhenotypicFeature(
+                    type=OntologyClass(
+                        # Current as of HPO `v2024-04-26`.
+                        id="HP:0100786",
+                        label="Hypersomnia",
+                    ),
+                ),
+                PhenotypicFeature(
+                    type=OntologyClass(
+                        # Obsolete for Long fingers [HP:0100807] as of HPO `v2024-04-26`.
+                        id="HP:0006010",
+                        label="Long fingers",
+                    ),
+                ),
+            ),
+        )
+
+        auditor.audit(item=item, notepad=notepad)
+
+        assert not notepad.has_errors_or_warnings(include_subsections=True)
