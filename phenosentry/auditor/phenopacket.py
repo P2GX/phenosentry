@@ -171,7 +171,7 @@ class PhenotypicAbnormalityAuditor(PhenopacketAuditor):
         pfs_pad = notepad.add_subsection("phenotypic_features")
         for i, pf in enumerate(item.phenotypic_features):
             if pf.type.id.startswith("HP:"):
-                if not self._hpo.graph.is_descendant_of_or_equal_to(pf.type.id, PHENOTYPIC_ABNORMALITY):
+                if not self._hpo.graph.is_ancestor_of_or_equal_to(PHENOTYPIC_ABNORMALITY, pf.type.id):
                     _, pf_pad = pfs_pad.add_subsections(i, "type")
                     pf_pad.add_error(
                         f"{pf.type.label} [{pf.type.id}] is not a descendant of Phenotypic abnormality [HP:0000118]"
