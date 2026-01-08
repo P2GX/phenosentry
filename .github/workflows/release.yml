@@ -4,6 +4,7 @@ on:
     push:
         tags:
             - "v*"
+    workflow_dispatch:
 
 jobs:
     build-and-publish:
@@ -17,7 +18,7 @@ jobs:
             - name: Run image
               uses: abatilo/actions-poetry@v3
               with:
-                poetry-version: ${{ matrix.poetry-version }}
+                poetry-version: "main"
             - name: Install dependencies
               run: poetry install --with dev
             - name: Run tests
